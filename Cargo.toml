@@ -1,0 +1,11 @@
+[package]
+name = "ryanabx-shell"
+authors = [ "Ryan Brue <ryanbrue@gmail.com>" ]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Layer shell panel for wayland desktops"
+repository = "https://github.com/ryanabx/ryanabx-shell"
+
+[dependencies]
+iced = { git = "https://github.com/ryanabx/iced", branch = "attempt-4-163", features = [ "wayland", "tiny-skia" ] }
