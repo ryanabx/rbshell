@@ -1,15 +1,24 @@
 use iced::{
-    application::{actions::window::SctkWindowSettings, InitialSurface},
-    widget::{text, row},
-    Application, Command, Element, Settings, Theme,
+    application::{
+        actions::{layer_surface::SctkLayerSurfaceSettings, window::SctkWindowSettings},
+        layer_surface::Anchor,
+        InitialSurface,
+    },
+    widget::{row, text},
+    Application, Command, Element, Settings, Size, Theme,
 };
 
 fn main() -> Result<(), iced::Error> {
     println!("Hello, world!");
-    let mut settings = SctkWindowSettings::default();
-    // settings.size_limits = Limits::NONE.min_height(300.0).min_width(600.0);
+    let settings = SctkLayerSurfaceSettings {
+        anchor: Anchor::BOTTOM,
+        size: Some((1280.into(), 48.into())),
+        layer: iced::application::layer_surface::Layer::Top,
+        exclusive_zone: 48,
+        ..Default::default()
+    };
     Panel::run(Settings {
-        initial_surface: InitialSurface::XdgWindow(settings),
+        initial_surface: InitialSurface::LayerSurface(settings),
         ..Settings::default()
     })
 }
