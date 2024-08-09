@@ -4,8 +4,11 @@ use iced::{
         layer_surface::Anchor,
         InitialSurface,
     },
-    widget::{row, text},
-    Application, Command, Element, Settings, Size, Theme,
+    widget::{
+        container::{self, Style},
+        row, text,
+    },
+    Application, Background, Color, Command, Element, Settings, Size, Theme,
 };
 
 fn main() -> Result<(), iced::Error> {
@@ -51,6 +54,19 @@ impl Application for Panel {
         &self,
         id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        return row![text!("Hi")].into();
+        return row![iced::widget::container(text!("Hi"))
+            .style(|_| {
+                Style {
+                    background: Some(Background::Color(Color {
+                        r: 18.8 / 256.0,
+                        g: 18.8 / 256.0,
+                        b: 18.8 / 256.0,
+                        a: 1.0,
+                    })),
+                    ..Default::default()
+                }
+            })
+            .fill()]
+        .into();
     }
 }
