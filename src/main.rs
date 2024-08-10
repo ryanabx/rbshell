@@ -3,13 +3,12 @@ use iced::{
         actions::{layer_surface::SctkLayerSurfaceSettings, window::SctkWindowSettings},
         layer_surface::Anchor,
         InitialSurface,
-    },
-    widget::{
-        container::{self, Style},
-        row, text,
-    },
-    Application, Background, Color, Command, Element, Settings, Size, Theme,
+    }, widget::{
+        column, container::{self, Style}, row, text
+    }, Application, Background, Border, Color, Command, Element, Settings, Size, Theme
 };
+
+mod config;
 
 fn main() -> Result<(), iced::Error> {
     println!("Hello, world!");
@@ -54,7 +53,7 @@ impl Application for Panel {
         &self,
         id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        return row![iced::widget::container(text!("Hi"))
+        return column![iced::widget::container(text!("Hi"))
             .style(|_| {
                 Style {
                     background: Some(Background::Color(Color {
@@ -63,6 +62,11 @@ impl Application for Panel {
                         b: 18.8 / 256.0,
                         a: 1.0,
                     })),
+                    border: Border {
+                        color: Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 },
+                        width: 1.0,
+                        radius: 0.0.into(),
+                    },
                     ..Default::default()
                 }
             })
