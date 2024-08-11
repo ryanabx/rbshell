@@ -4,10 +4,11 @@ use iced::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
     widget::{
+        column,
         container::{self, Style},
         row, Row,
     },
-    Application, Background, Border, Color, Command, Element, Settings, Theme,
+    Application, Background, Border, Color, Command, Element, Length, Radius, Settings, Theme,
 };
 
 mod config;
@@ -73,17 +74,24 @@ impl<'a> Application for Panel<'a> {
         &self,
         id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        let favorites_images = self
-            .panel_config
-            .favorites
-            .iter()
-            .filter_map(|e| e.get_widget().map(|x| Element::new(x)));
+        let favorites_images = self.panel_config.favorites.iter().filter_map(|e| {
+            e.get_widget()
+                .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(2)))
+        });
         let panel_items: Row<Self::Message, Self::Theme, Self::Renderer> =
             iced::widget::row(favorites_images);
-        iced::widget::container(panel_items)
-            .style(|theme| self.panel_style(theme))
-            .fill()
-            .into()
+        iced::widget::container(column![
+            iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
+                color: Color::WHITE,
+                width: 1,
+                radius: Radius::from(0),
+                fill_mode: iced::widget::rule::FillMode::Full
+            }),
+            panel_items
+        ])
+        .style(|theme| self.panel_style(theme))
+        .fill()
+        .into()
     }
 }
 
@@ -91,21 +99,11 @@ impl<'a> Panel<'a> {
     fn panel_style(&self, _theme: &Theme) -> Style {
         Style {
             background: Some(Background::Color(Color {
-                r: 18.8 / 256.0,
-                g: 18.8 / 256.0,
-                b: 18.8 / 256.0,
+                r: 24.0 / 256.0,
+                g: 24.0 / 256.0,
+                b: 24.8 / 256.0,
                 a: 1.0,
             })),
-            border: Border {
-                color: Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: 1.0,
-                },
-                width: 1.0,
-                radius: 0.0.into(),
-            },
             ..Default::default()
         }
     }

@@ -1,5 +1,5 @@
 use freedesktop_desktop_entry::DesktopEntry;
-use iced::Length;
+use iced::{widget::button, Background, Border, Color, Length, Radius, Theme};
 
 use crate::desktop_entry::DesktopEntryCache;
 
@@ -35,6 +35,7 @@ impl<'a> AppTrayApp<'a> {
         match self.0.icon() {
             Some(icon) => freedesktop_icons::lookup(icon)
                 .with_cache()
+                .with_size(48)
                 .find()
                 .map(|path| {
                     iced::widget::button(
@@ -43,11 +44,43 @@ impl<'a> AppTrayApp<'a> {
                             .width(Length::Fill)
                             .height(Length::Fill),
                     )
-                    .width(48)
-                    .height(48)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .padding(8)
+                    .style(|theme, status| self.button_style(theme, status))
                     .on_press(crate::Message::Panic)
                 }),
             None => None,
+        }
+    }
+
+    fn button_style(&self, _theme: &Theme, status: button::Status) -> button::Style {
+        button::Style {
+            background: Some(Background::Color(Color {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+                a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+                    0.1
+                } else {
+                    0.0
+                },
+            })),
+            border: Border {
+                radius: Radius::from(8.0),
+                color: Color {
+                    r: 1.0,
+                    g: 1.0,
+                    b: 1.0,
+                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+                        0.3
+                    } else {
+                        0.0
+                    },
+                },
+                width: 1.0,
+            },
+            ..Default::default()
         }
     }
 }
