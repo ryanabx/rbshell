@@ -9,4 +9,5 @@ repository = "https://github.com/ryanabx/ryanabx-shell"
 
 [dependencies]
 freedesktop-desktop-entry = "0.7.0"
-iced = { git = "https://github.com/ryanabx/iced", branch = "attempt-4-163", features = [ "wayland", "tiny-skia" ] }
+freedesktop-icons = "0.2.6"
+iced = { git = "https://github.com/ryanabx/iced", branch = "attempt-4-163", features = [ "wayland", "tiny-skia", "image" ] }
