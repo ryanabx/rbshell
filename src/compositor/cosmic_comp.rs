@@ -66,10 +66,12 @@ impl OutputHandler for WaylandData {
         output: cctk::wayland_client::protocol::wl_output::WlOutput,
     ) {
         if let Some(info) = self.output_state.info(&output) {
-            let _ = self.tx.unbounded_send(WaylandMessage::Output(OutputUpdate::Add(
-                output.clone(),
-                info.clone(),
-            )));
+            let _ = self
+                .tx
+                .unbounded_send(WaylandMessage::Output(OutputUpdate::Add(
+                    output.clone(),
+                    info.clone(),
+                )));
         }
     }
 
@@ -80,10 +82,12 @@ impl OutputHandler for WaylandData {
         output: cctk::wayland_client::protocol::wl_output::WlOutput,
     ) {
         if let Some(info) = self.output_state.info(&output) {
-            let _ = self.tx.unbounded_send(WaylandMessage::Output(OutputUpdate::Update(
-                output.clone(),
-                info.clone(),
-            )));
+            let _ = self
+                .tx
+                .unbounded_send(WaylandMessage::Output(OutputUpdate::Update(
+                    output.clone(),
+                    info.clone(),
+                )));
         }
     }
 
@@ -237,10 +241,12 @@ impl ToplevelInfoHandler for WaylandData {
         toplevel: &cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1,
     ) {
         if let Some(info) = self.toplevel_info_state.info(toplevel) {
-            let _ = self.tx.unbounded_send(WaylandMessage::Toplevel(ToplevelUpdate::Add(
-                toplevel.clone(),
-                info.clone(),
-            )));
+            let _ = self
+                .tx
+                .unbounded_send(WaylandMessage::Toplevel(ToplevelUpdate::Add(
+                    toplevel.clone(),
+                    info.clone(),
+                )));
         } else {
             println!("WTF");
         }

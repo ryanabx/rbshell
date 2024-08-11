@@ -1,5 +1,5 @@
-use app_tray::cosmic_comp::{WaylandMessage, WaylandRequest};
 use cctk::{sctk::reexports::calloop::channel::Sender, wayland_client::protocol::wl_seat::WlSeat};
+use compositor::cosmic_comp::{WaylandMessage, WaylandRequest};
 use config::PanelConfig;
 use iced::{
     application::{
@@ -16,6 +16,7 @@ use iced::{
 };
 
 mod app_tray;
+mod compositor;
 mod config;
 
 fn main() -> Result<(), iced::Error> {
@@ -123,7 +124,7 @@ impl<'a> Application for Panel<'a> {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         Subscription::batch(vec![
-            app_tray::cosmic_comp::wayland_subscription().map(Message::Wayland),
+            compositor::cosmic_comp::wayland_subscription().map(Message::Wayland),
             listen_with(|e, _, _| match e {
                 iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
                     event::wayland::Event::Seat(e, seat),
