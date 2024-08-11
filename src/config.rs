@@ -1,7 +1,7 @@
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{widget::button, Background, Border, Color, Length, Radius, Theme};
 
-use crate::desktop_entry::DesktopEntryCache;
+use crate::app_tray::desktop_entry::DesktopEntryCache;
 
 #[derive(Debug, Clone)]
 pub struct PanelConfig<'a> {

@@ -1,18 +1,22 @@
+use app_tray::cosmic_comp::{WaylandMessage, WaylandRequest};
+use cctk::{sctk::reexports::calloop::channel::Sender, wayland_client::protocol::wl_seat::WlSeat};
 use config::PanelConfig;
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
+    event::{self, listen_with},
     widget::{
         column,
         container::{self, Style},
         row, Row,
     },
-    Application, Background, Border, Color, Command, Element, Length, Radius, Settings, Theme,
+    Application, Background, Border, Color, Command, Element, Length, Radius, Settings,
+    Subscription, Theme,
 };
 
+mod app_tray;
 mod config;
-mod desktop_entry;
 
 fn main() -> Result<(), iced::Error> {
     let settings = SctkLayerSurfaceSettings {
@@ -31,12 +35,14 @@ fn main() -> Result<(), iced::Error> {
 #[derive(Clone, Debug)]
 struct Panel<'a> {
     panel_config: PanelConfig<'a>,
+    wayland_sender: Option<Sender<WaylandRequest>>,
 }
 
 impl<'a> Default for Panel<'a> {
     fn default() -> Self {
         Self {
             panel_config: PanelConfig::default(),
+            wayland_sender: None,
         }
     }
 }
@@ -44,6 +50,9 @@ impl<'a> Default for Panel<'a> {
 #[derive(Clone, Debug)]
 pub enum Message {
     Panic,
+    Wayland(WaylandMessage),
+    NewSeat(WlSeat),
+    RemovedSeat(WlSeat),
 }
 
 impl<'a> Application for Panel<'a> {
@@ -65,6 +74,24 @@ impl<'a> Application for Panel<'a> {
         match message {
             Message::Panic => {
                 panic!("Panic button pressed hehe");
+            }
+            Message::Wayland(evt) => {
+                println!("Wayland event! {:?}", evt);
+                match evt {
+                    WaylandMessage::Init(wayland_sender) => {
+                        self.wayland_sender.replace(wayland_sender);
+                    }
+                    WaylandMessage::Finished => {
+                        println!("WHY?");
+                    }
+                    _ => {}
+                }
+            }
+            Message::NewSeat(_) => {
+                println!("New seat!");
+            }
+            Message::RemovedSeat(_) => {
+                println!("Removed seat!");
             }
         }
         Command::none()
@@ -93,15 +120,30 @@ impl<'a> Application for Panel<'a> {
         .fill()
         .into()
     }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        Subscription::batch(vec![
+            app_tray::cosmic_comp::wayland_subscription().map(Message::Wayland),
+            listen_with(|e, _, _| match e {
+                iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
+                    event::wayland::Event::Seat(e, seat),
+                )) => match e {
+                    event::wayland::SeatEvent::Enter => Some(Message::NewSeat(seat)),
+                    event::wayland::SeatEvent::Leave => Some(Message::RemovedSeat(seat)),
+                },
+                _ => None,
+            }),
+        ])
+    }
 }
 
 impl<'a> Panel<'a> {
     fn panel_style(&self, _theme: &Theme) -> Style {
         Style {
             background: Some(Background::Color(Color {
-                r: 24.0 / 256.0,
-                g: 24.0 / 256.0,
-                b: 24.8 / 256.0,
+                r: 30.0 / 256.0,
+                g: 30.0 / 256.0,
+                b: 30.0 / 256.0,
                 a: 1.0,
             })),
             ..Default::default()
