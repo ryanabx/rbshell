@@ -38,10 +38,14 @@ impl<'a> AppTrayApp<'a> {
                 .find()
                 .map(|path| {
                     iced::widget::button(
-                        iced::widget::image(path).content_fit(iced::ContentFit::Fill),
+                        iced::widget::image(path)
+                            .content_fit(iced::ContentFit::Contain)
+                            .width(Length::Fill)
+                            .height(Length::Fill),
                     )
-                    .width(Length::Fill)
-                    .height(Length::Fill)
+                    .width(48)
+                    .height(48)
+                    .on_press(crate::Message::Panic)
                 }),
             None => None,
         }

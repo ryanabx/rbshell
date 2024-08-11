@@ -1,9 +1,7 @@
 use config::PanelConfig;
 use iced::{
     application::{
-        actions::layer_surface::SctkLayerSurfaceSettings,
-        layer_surface::Anchor,
-        InitialSurface,
+        actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
     widget::{
         container::{self, Style},
@@ -17,8 +15,8 @@ mod desktop_entry;
 
 fn main() -> Result<(), iced::Error> {
     let settings = SctkLayerSurfaceSettings {
-        anchor: Anchor::BOTTOM,
-        size: Some((500.into(), 48.into())),
+        anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
+        size: Some((None, Some(48))),
         layer: iced::application::layer_surface::Layer::Top,
         exclusive_zone: 48,
         ..Default::default()
@@ -43,7 +41,9 @@ impl<'a> Default for Panel<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct Message {}
+pub enum Message {
+    Panic,
+}
 
 impl<'a> Application for Panel<'a> {
     type Message = Message;
@@ -61,6 +61,11 @@ impl<'a> Application for Panel<'a> {
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+        match message {
+            Message::Panic => {
+                panic!("Panic button pressed hehe");
+            }
+        }
         Command::none()
     }
 

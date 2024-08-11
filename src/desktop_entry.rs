@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use freedesktop_desktop_entry::{
-    default_paths, get_languages_from_env, DesktopEntry, Iter,
-};
+use freedesktop_desktop_entry::{default_paths, get_languages_from_env, DesktopEntry, Iter};
 
 pub struct DesktopEntryCache<'a>(pub HashMap<String, DesktopEntry<'a>>);
 
