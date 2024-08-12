@@ -31,13 +31,15 @@ impl<'a> AppTrayApp<'a> {
             .map(|entry| Self(entry.to_owned()))
     }
 
-    pub fn get_widget(&self) -> Option<iced::widget::Button<crate::Message>> {
-        match self.0.icon() {
+    pub fn get_widget(
+        app_tray_app: AppTrayApp<'a>,
+    ) -> Option<iced::widget::Button<'a, crate::Message>> {
+        match &app_tray_app.0.icon() {
             Some(icon) => freedesktop_icons::lookup(icon)
                 .with_cache()
                 .with_size(48)
                 .find()
-                .map(|path| {
+                .map(move |path| {
                     iced::widget::button(
                         iced::widget::image(path)
                             .content_fit(iced::ContentFit::Contain)
@@ -47,7 +49,7 @@ impl<'a> AppTrayApp<'a> {
                     .width(Length::Fill)
                     .height(Length::Fill)
                     .padding(8)
-                    .style(|theme, status| self.button_style(theme, status))
+                    .style(move |theme, status| app_tray_app.button_style(theme, status))
                     .on_press(crate::Message::Panic)
                 }),
             None => None,

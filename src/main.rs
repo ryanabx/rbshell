@@ -1,6 +1,7 @@
-use cctk::{sctk::reexports::calloop::channel::Sender, wayland_client::protocol::wl_seat::WlSeat};
+use app_tray::AppTray;
+use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::cosmic_comp::{WaylandMessage, WaylandRequest};
-use config::PanelConfig;
+use config::{AppTrayApp, PanelConfig};
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
@@ -36,14 +37,14 @@ fn main() -> Result<(), iced::Error> {
 #[derive(Clone, Debug)]
 struct Panel<'a> {
     panel_config: PanelConfig<'a>,
-    wayland_sender: Option<Sender<WaylandRequest>>,
+    app_tray: AppTray<'a>,
 }
 
 impl<'a> Default for Panel<'a> {
     fn default() -> Self {
         Self {
             panel_config: PanelConfig::default(),
-            wayland_sender: None,
+            app_tray: AppTray::default(),
         }
     }
 }
@@ -77,16 +78,7 @@ impl<'a> Application for Panel<'a> {
                 panic!("Panic button pressed hehe");
             }
             Message::Wayland(evt) => {
-                println!("Wayland event! {:?}", evt);
-                match evt {
-                    WaylandMessage::Init(wayland_sender) => {
-                        self.wayland_sender.replace(wayland_sender);
-                    }
-                    WaylandMessage::Finished => {
-                        println!("WHY?");
-                    }
-                    _ => {}
-                }
+                self.app_tray.wayland_event(evt);
             }
             Message::NewSeat(_) => {
                 println!("New seat!");
@@ -102,12 +94,28 @@ impl<'a> Application for Panel<'a> {
         &self,
         id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        let favorites_images = self.panel_config.favorites.iter().filter_map(|e| {
-            e.get_widget()
-                .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(2)))
-        });
-        let panel_items: Row<Self::Message, Self::Theme, Self::Renderer> =
-            iced::widget::row(favorites_images);
+        let favorites_images = self
+            .panel_config
+            .favorites
+            .iter()
+            .filter_map(|x| AppTrayApp::get_widget(x.clone()))
+            .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(2)));
+        let app_tray_apps = self
+            .app_tray
+            .active_toplevels
+            .iter()
+            .filter_map(|(app_id, _)| AppTrayApp::new_from_appid(&app_id, &self.app_tray.de_cache));
+        let toplevel_images = app_tray_apps
+            .filter_map(AppTrayApp::get_widget)
+            .map(|inner| {
+                Element::from(
+                    iced::widget::container(inner)
+                        .width(48)
+                        .height(48)
+                        .padding(2),
+                )
+            });
+        let panel_items = iced::widget::row(favorites_images.chain(toplevel_images));
         iced::widget::container(column![
             iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
                 color: Color::WHITE,

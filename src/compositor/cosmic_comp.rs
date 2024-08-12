@@ -385,9 +385,7 @@ fn wayland_handler(tx: UnboundedSender<WaylandMessage>, rx: Channel<WaylandReque
             println!("Exiting");
             break;
         }
-        println!("Waiting for next event");
         event_loop.dispatch(None, &mut app_data).unwrap();
-        println!("Hi");
     }
 }
 
