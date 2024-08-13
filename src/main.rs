@@ -1,6 +1,9 @@
 use app_tray::AppTray;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
-use compositor::cosmic_comp::{WaylandMessage, WaylandRequest};
+use compositor::{
+    cosmic_comp::{CosmicWaylandMessage, WaylandRequest},
+    WaylandMessage,
+};
 use config::{AppTrayApp, PanelConfig};
 use iced::{
     application::{
@@ -132,7 +135,7 @@ impl<'a> Application for Panel<'a> {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         Subscription::batch(vec![
-            compositor::cosmic_comp::wayland_subscription().map(Message::Wayland),
+            compositor::wayland_subscription().map(Message::Wayland),
             listen_with(|e, _, _| match e {
                 iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
                     event::wayland::Event::Seat(e, seat),

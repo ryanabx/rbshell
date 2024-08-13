@@ -6,7 +6,10 @@ use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::Command;
 
-use crate::compositor::cosmic_comp::{ToplevelUpdate, WaylandMessage, WaylandRequest};
+use crate::compositor::{
+    cosmic_comp::{CosmicWaylandMessage, ToplevelUpdate, WaylandRequest},
+    WaylandMessage,
+};
 
 pub mod desktop_entry;
 
@@ -38,15 +41,29 @@ impl<'a> AppTray<'a> {
         event: WaylandMessage,
     ) -> Option<iced::Command<crate::Message>> {
         match event {
-            WaylandMessage::Init(wayland_sender) => {
+            WaylandMessage::CosmicComp(evt) => self.cosmic_wayland_event(evt),
+            _ => panic!("Not supported"),
+        }
+    }
+
+    pub fn get_desktop_entry(&mut self, app_id: &str) -> Option<DesktopEntry<'a>> {
+        self.de_cache.0.get(app_id).cloned()
+    }
+
+    fn cosmic_wayland_event(
+        &mut self,
+        event: CosmicWaylandMessage,
+    ) -> Option<iced::Command<crate::Message>> {
+        match event {
+            CosmicWaylandMessage::Init(wayland_sender) => {
                 self.wayland_sender.replace(wayland_sender);
                 None
             }
-            WaylandMessage::Finished => {
+            CosmicWaylandMessage::Finished => {
                 println!("WHY?");
                 None
             }
-            WaylandMessage::Toplevel(toplevel_update) => match toplevel_update {
+            CosmicWaylandMessage::Toplevel(toplevel_update) => match toplevel_update {
                 ToplevelUpdate::Add(handle, info) => {
                     let app_id = info.app_id.clone();
                     println!("Adding toplevel with app_id {} to list!", &app_id);
@@ -109,9 +126,5 @@ impl<'a> AppTray<'a> {
             },
             _ => None,
         }
-    }
-
-    pub fn get_desktop_entry(&mut self, app_id: &str) -> Option<DesktopEntry<'a>> {
-        self.de_cache.0.get(app_id).cloned()
     }
 }

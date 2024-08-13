@@ -37,7 +37,6 @@ impl<'a> AppTrayApp<'a> {
         match &app_tray_app.0.icon() {
             Some(icon) => {
                 let icon_path = freedesktop_icons::lookup(icon).with_cache().find();
-                println!("icon_path: {:?}", icon_path);
                 icon_path.map(move |path| {
                     if path.extension().is_some_and(|x| x == "svg") {
                         iced::widget::button(

@@ -50,7 +50,7 @@ struct WaylandData {
     activation_state: Option<ActivationState>,
     registry_state: RegistryState,
     seat_state: SeatState,
-    tx: UnboundedSender<WaylandMessage>,
+    tx: UnboundedSender<CosmicWaylandMessage>,
     exit: bool,
 }
 
@@ -68,7 +68,7 @@ impl OutputHandler for WaylandData {
         if let Some(info) = self.output_state.info(&output) {
             let _ = self
                 .tx
-                .unbounded_send(WaylandMessage::Output(OutputUpdate::Add(
+                .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Add(
                     output.clone(),
                     info.clone(),
                 )));
@@ -84,7 +84,7 @@ impl OutputHandler for WaylandData {
         if let Some(info) = self.output_state.info(&output) {
             let _ = self
                 .tx
-                .unbounded_send(WaylandMessage::Output(OutputUpdate::Update(
+                .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Update(
                     output.clone(),
                     info.clone(),
                 )));
@@ -99,7 +99,9 @@ impl OutputHandler for WaylandData {
     ) {
         let _ = self
             .tx
-            .unbounded_send(WaylandMessage::Output(OutputUpdate::Remove(output.clone())));
+            .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Remove(
+                output.clone(),
+            )));
     }
 }
 
@@ -123,7 +125,7 @@ impl WorkspaceHandler for WaylandData {
             .collect::<Vec<_>>();
         let _ = self
             .tx
-            .unbounded_send(WaylandMessage::Workspace(active_workspaces.clone()));
+            .unbounded_send(CosmicWaylandMessage::Workspace(active_workspaces.clone()));
     }
 }
 
@@ -159,12 +161,14 @@ impl ActivationHandler for WaylandData {
     type RequestData = ExecRequestData;
 
     fn new_token(&mut self, token: String, data: &Self::RequestData) {
-        let _ = self.tx.unbounded_send(WaylandMessage::ActivationToken {
-            token: Some(token),
-            app_id: data.app_id().map(|x| x.to_owned()),
-            exec: data.exec.clone(),
-            gpu_idx: data.gpu_idx,
-        });
+        let _ = self
+            .tx
+            .unbounded_send(CosmicWaylandMessage::ActivationToken {
+                token: Some(token),
+                app_id: data.app_id().map(|x| x.to_owned()),
+                exec: data.exec.clone(),
+                gpu_idx: data.gpu_idx,
+            });
     }
 }
 
@@ -243,7 +247,7 @@ impl ToplevelInfoHandler for WaylandData {
         if let Some(info) = self.toplevel_info_state.info(toplevel) {
             let _ = self
                 .tx
-                .unbounded_send(WaylandMessage::Toplevel(ToplevelUpdate::Add(
+                .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Add(
                     toplevel.clone(),
                     info.clone(),
                 )));
@@ -261,7 +265,7 @@ impl ToplevelInfoHandler for WaylandData {
         if let Some(info) = self.toplevel_info_state.info(toplevel) {
             let _ = self
                 .tx
-                .unbounded_send(WaylandMessage::Toplevel(ToplevelUpdate::Update(
+                .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Update(
                     toplevel.clone(),
                     info.clone(),
                 )));
@@ -276,13 +280,13 @@ impl ToplevelInfoHandler for WaylandData {
     ) {
         let _ = self
             .tx
-            .unbounded_send(WaylandMessage::Toplevel(ToplevelUpdate::Remove(
+            .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Remove(
                 toplevel.clone(),
             )));
     }
 }
 
-fn wayland_handler(tx: UnboundedSender<WaylandMessage>, rx: Channel<WaylandRequest>) {
+fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<WaylandRequest>) {
     let socket = std::env::var("X_PRIVILEGED_WAYLAND_SOCKET")
         .ok()
         .and_then(|fd| {
@@ -347,12 +351,14 @@ fn wayland_handler(tx: UnboundedSender<WaylandMessage>, rx: Channel<WaylandReque
                             },
                         );
                     } else {
-                        let _ = state.tx.unbounded_send(WaylandMessage::ActivationToken {
-                            token: None,
-                            app_id: Some(app_id),
-                            exec,
-                            gpu_idx,
-                        });
+                        let _ = state
+                            .tx
+                            .unbounded_send(CosmicWaylandMessage::ActivationToken {
+                                token: None,
+                                app_id: Some(app_id),
+                                exec,
+                                gpu_idx,
+                            });
                     }
                 }
             },
@@ -390,7 +396,7 @@ fn wayland_handler(tx: UnboundedSender<WaylandMessage>, rx: Channel<WaylandReque
 }
 
 #[derive(Clone, Debug)]
-pub enum WaylandMessage {
+pub enum CosmicWaylandMessage {
     Init(channel::Sender<WaylandRequest>),
     Finished,
     Toplevel(ToplevelUpdate),
@@ -452,9 +458,9 @@ pub enum State {
     Finished,
 }
 
-pub fn wayland_subscription() -> iced::Subscription<WaylandMessage> {
+pub fn wayland_subscription() -> iced::Subscription<CosmicWaylandMessage> {
     subscription::channel(
-        std::any::TypeId::of::<WaylandMessage>(),
+        std::any::TypeId::of::<CosmicWaylandMessage>(),
         50,
         move |mut output| async move {
             let mut state = State::Waiting;
@@ -466,12 +472,12 @@ pub fn wayland_subscription() -> iced::Subscription<WaylandMessage> {
     )
 }
 
-pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<WaylandMessage>>>> =
+pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<CosmicWaylandMessage>>>> =
     Lazy::new(|| Mutex::new(None));
 
 async fn start_listening(
     state: State,
-    output: &mut futures::channel::mpsc::Sender<WaylandMessage>,
+    output: &mut futures::channel::mpsc::Sender<CosmicWaylandMessage>,
 ) -> State {
     match state {
         State::Waiting => {
@@ -484,7 +490,7 @@ async fn start_listening(
                         wayland_handler(toplevel_tx, calloop_rx);
                     });
                     *guard = Some(toplevel_rx);
-                    _ = output.send(WaylandMessage::Init(calloop_tx)).await;
+                    _ = output.send(CosmicWaylandMessage::Init(calloop_tx)).await;
                 }
                 guard.as_mut().unwrap()
             };
@@ -494,7 +500,7 @@ async fn start_listening(
                     State::Waiting
                 }
                 None => {
-                    _ = output.send(WaylandMessage::Finished).await;
+                    _ = output.send(CosmicWaylandMessage::Finished).await;
                     State::Finished
                 }
             }
