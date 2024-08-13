@@ -39,12 +39,21 @@ impl<'a> AppTrayApp<'a> {
                 let icon_path = freedesktop_icons::lookup(icon).with_cache().find();
                 println!("icon_path: {:?}", icon_path);
                 icon_path.map(move |path| {
-                    iced::widget::button(
-                        iced::widget::Image::new(path)
-                            .content_fit(iced::ContentFit::Contain)
-                            .width(Length::Fill)
-                            .height(Length::Fill),
-                    )
+                    if path.extension().is_some_and(|x| x == "svg") {
+                        iced::widget::button(
+                            iced::widget::svg(path)
+                                .content_fit(iced::ContentFit::Contain)
+                                .width(Length::Fill)
+                                .height(Length::Fill),
+                        )
+                    } else {
+                        iced::widget::button(
+                            iced::widget::image(path)
+                                .content_fit(iced::ContentFit::Contain)
+                                .width(Length::Fill)
+                                .height(Length::Fill),
+                        )
+                    }
                     .width(Length::Fill)
                     .height(Length::Fill)
                     .padding(8)

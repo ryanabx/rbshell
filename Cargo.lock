@@ -1590,7 +1590,7 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 [[package]]
 name = "iced"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "dnd",
  "iced_accessibility",
@@ -1608,7 +1608,7 @@ dependencies = [
 [[package]]
 name = "iced_accessibility"
 version = "0.1.0"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "accesskit",
  "accesskit_unix",
@@ -1617,7 +1617,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "bitflags 2.6.0",
  "bytes",
@@ -1641,7 +1641,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "futures",
  "iced_core",
@@ -1654,7 +1654,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "bitflags 2.6.0",
  "bytemuck",
@@ -1675,7 +1675,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -1687,7 +1687,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "bytes",
  "dnd",
@@ -1703,7 +1703,7 @@ dependencies = [
 [[package]]
 name = "iced_sctk"
 version = "0.1.0"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "enum-repr",
  "float-cmp",
@@ -1728,7 +1728,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -1744,7 +1744,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "as-raw-xcb-connection",
  "bitflags 2.6.0",
@@ -1774,7 +1774,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.13.0-dev"
-source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#db3c49e58fa34d67ed56309b94d583863bcc9e64"
+source = "git+https://github.com/ryanabx/iced?branch=attempt-4-163#9fc61c5b1f68f0274f8ac25cf51bc8789465ca65"
 dependencies = [
  "dnd",
  "iced_renderer",
@@ -3870,7 +3870,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
