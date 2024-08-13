@@ -41,7 +41,7 @@ use iced::{
 use once_cell::sync::Lazy;
 
 struct WaylandData {
-    conn: Connection,
+    _conn: Connection,
     queue_handle: QueueHandle<Self>,
     output_state: OutputState,
     workspace_state: WorkspaceState,
@@ -375,7 +375,7 @@ fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<Waylan
     let mut app_data = WaylandData {
         exit: false,
         tx,
-        conn,
+        _conn: conn,
         queue_handle: qh.clone(),
         output_state: OutputState::new(&globals, &qh),
         workspace_state: WorkspaceState::new(&registry_state, &qh),

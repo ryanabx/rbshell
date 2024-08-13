@@ -1,22 +1,14 @@
 use app_tray::AppTray;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
-use compositor::{
-    cosmic_comp::{CosmicWaylandMessage, WaylandRequest},
-    WaylandMessage,
-};
+use compositor::WaylandMessage;
 use config::{AppTrayApp, PanelConfig};
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
     event::{self, listen_with},
-    widget::{
-        column,
-        container::{self, Style},
-        row, Row,
-    },
-    Application, Background, Border, Color, Command, Element, Length, Radius, Settings,
-    Subscription, Theme,
+    widget::{column, container::Style},
+    Application, Background, Color, Command, Element, Radius, Settings, Subscription, Theme,
 };
 
 mod app_tray;
@@ -67,11 +59,11 @@ impl<'a> Application for Panel<'a> {
     type Renderer = iced::Renderer;
     type Flags = ();
 
-    fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+    fn new(_flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         (Panel::default(), Command::<self::Message>::none())
     }
 
-    fn title(&self, id: iced::window::Id) -> String {
+    fn title(&self, _id: iced::window::Id) -> String {
         "Window".into()
     }
 
@@ -95,7 +87,7 @@ impl<'a> Application for Panel<'a> {
 
     fn view(
         &self,
-        id: iced::window::Id,
+        _id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
         let favorites_images = self
             .panel_config

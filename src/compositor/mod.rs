@@ -1,7 +1,4 @@
-use std::{
-    env,
-    ffi::{OsStr, OsString},
-};
+use std::env;
 
 pub mod cosmic_comp;
 pub mod wlr;
