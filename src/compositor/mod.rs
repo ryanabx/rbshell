@@ -22,7 +22,8 @@ impl CompositorBackend {
         };
         match current_compositor.as_deref() {
             Ok("COSMIC") => Self::Cosmic(CosmicCompBackend::new()),
-            _ => panic!("Unsupported desktop"),
+            Ok(desktop) => panic!("Unsupported desktop {desktop}. Specify a backend with the env variable RYANABX_SHELL_DESKTOP"),
+            _ => panic!("Unsupported desktop. Specify a backend with the env variable RYANABX_SHELL_DESKTOP"),
         }
     }
 
