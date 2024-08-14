@@ -4,7 +4,7 @@ use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
 
-use crate::app_tray::AppTray;
+use crate::{app_tray::AppTray, Panel};
 
 pub mod cosmic_comp;
 pub mod wlr;
@@ -30,33 +30,49 @@ impl CompositorBackend {
         }
     }
 
-    pub fn wayland_subscription(&self) -> iced::Subscription<WaylandEvent> {
+    pub fn wayland_subscription(&self) -> iced::Subscription<WaylandIncoming> {
         match self {
-            Self::Cosmic(backend) => backend.wayland_subscription().map(WaylandEvent::Cosmic),
-            Self::NotSupported => unreachable!(),
+            Self::Cosmic(backend) => backend.wayland_subscription().map(WaylandIncoming::Cosmic),
+            Self::NotSupported => todo!(),
         }
     }
 
     pub fn handle_message(
         &mut self,
         app_tray: &mut AppTray,
-        event: WaylandEvent,
+        incoming: WaylandIncoming,
     ) -> Option<iced::Command<crate::Message>> {
-        match (self, event) {
-            (Self::Cosmic(backend), WaylandEvent::Cosmic(evt)) => {
-                backend.handle_message(app_tray, evt)
+        match (self, incoming) {
+            (Self::Cosmic(backend), WaylandIncoming::Cosmic(evt)) => {
+                backend.handle_incoming(app_tray, evt)
             }
-            (Self::NotSupported, _) => unreachable!(),
-            (_, WaylandEvent::NotSupported) => unreachable!(),
+            (Self::NotSupported, _) => todo!(),
+            (_, WaylandIncoming::NotSupported) => todo!(),
+        }
+    }
+
+    pub fn handle_outgoing_message(
+        &mut self,
+        app_tray: &mut AppTray,
+        outgoing: WaylandOutgoing,
+    ) -> Option<iced::Command<crate::Message>> {
+        match self {
+            Self::Cosmic(backend) => backend.handle_outgoing(app_tray, outgoing),
+            _ => todo!(),
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum WaylandEvent {
-    Cosmic(cosmic_comp::CosmicWaylandMessage),
+pub enum WaylandIncoming {
+    Cosmic(cosmic_comp::CosmicIncoming),
     #[allow(dead_code)]
     NotSupported,
+}
+
+#[derive(Clone, Debug)]
+pub enum WaylandOutgoing {
+    Exec(String, String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

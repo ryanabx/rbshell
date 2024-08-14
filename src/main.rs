@@ -1,7 +1,9 @@
-use app_tray::AppTray;
+use std::borrow::Borrow;
+
+use app_tray::{AppTray, ApplicationGroup};
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
-use compositor::{CompositorBackend, WaylandEvent, WindowHandle};
-use config::{AppTrayApp, PanelConfig};
+use compositor::{CompositorBackend, WaylandIncoming, WaylandOutgoing, WindowHandle};
+use config::PanelConfig;
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
@@ -31,7 +33,7 @@ fn main() -> Result<(), iced::Error> {
 
 #[derive(Clone, Debug)]
 struct Panel<'a> {
-    panel_config: PanelConfig<'a>,
+    panel_config: PanelConfig,
     app_tray: AppTray<'a>,
     backend: CompositorBackend,
 }
@@ -49,15 +51,22 @@ impl<'a> Default for Panel<'a> {
 #[derive(Clone, Debug)]
 pub enum Message {
     Panic,
-    WaylandBackend(WaylandEvent),
+    WaylandIn(WaylandIncoming),
+    WaylandOut(WaylandOutgoing),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
+}
+
+#[derive(Clone, Debug)]
+pub enum AppTrayRequest {
+    Window(WindowOperationMessage),
 }
 
 #[derive(Clone, Debug)]
 pub enum WindowOperationMessage {
     Activate(WindowHandle),
     Minimize(WindowHandle),
+    Launch(String),
 }
 
 impl<'a> Application for Panel<'a> {
@@ -80,45 +89,65 @@ impl<'a> Application for Panel<'a> {
             Message::Panic => {
                 panic!("Panic button pressed hehe");
             }
-            Message::WaylandBackend(evt) => {
-                self.backend.handle_message(&mut self.app_tray, evt);
-            }
+            Message::WaylandIn(evt) => self
+                .backend
+                .handle_message(&mut self.app_tray, evt)
+                .unwrap_or(Command::none()),
+            Message::WaylandOut(evt) => self
+                .backend
+                .handle_outgoing_message(&mut self.app_tray, evt)
+                .unwrap_or(Command::none()),
             Message::NewSeat(_) => {
                 println!("New seat!");
+                Command::none()
             }
             Message::RemovedSeat(_) => {
                 println!("Removed seat!");
+                Command::none()
             }
         }
-        Command::none()
     }
 
     fn view(
         &self,
         _id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        let favorites_images = self
+        // Get app tray apps
+        let app_tray_apps = self
             .panel_config
             .favorites
             .iter()
-            .filter_map(|x| AppTrayApp::get_widget(x.clone()))
-            .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(2)));
-        let app_tray_apps = self
-            .app_tray
-            .active_toplevels
-            .iter()
-            .filter_map(|(app_id, _)| AppTrayApp::new_from_appid(&app_id, &self.app_tray.de_cache));
-        let toplevel_images = app_tray_apps
-            .filter_map(AppTrayApp::get_widget)
-            .map(|inner| {
-                Element::from(
-                    iced::widget::container(inner)
-                        .width(48)
-                        .height(48)
-                        .padding(2),
+            .map(|x| {
+                let app_id = x.clone();
+                (
+                    app_id,
+                    self.app_tray
+                        .active_toplevels
+                        .get(x)
+                        .cloned()
+                        .unwrap_or(ApplicationGroup::default()),
                 )
-            });
-        let panel_items = iced::widget::row(favorites_images.chain(toplevel_images));
+            })
+            .chain(
+                self.app_tray
+                    .active_toplevels
+                    .iter()
+                    .filter_map(|(app_id, info)| {
+                        if self.panel_config.favorites.contains(app_id) {
+                            None
+                        } else {
+                            Some((app_id.clone(), info.clone()))
+                        }
+                    }),
+            )
+            .map(|(app_id, group)| {
+                let entry = self.app_tray.de_cache.0.get(&app_id);
+                // println!("{}, {:?}", &app_id, entry.map(|x| x.appid.clone()));
+                app_tray::get_tray_widget(&app_id, entry, group)
+            })
+            .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(2)));
+
+        let panel_items = iced::widget::row(app_tray_apps);
         iced::widget::container(column![
             iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
                 color: Color::WHITE,
@@ -135,9 +164,7 @@ impl<'a> Application for Panel<'a> {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         Subscription::batch(vec![
-            self.backend
-                .wayland_subscription()
-                .map(Message::WaylandBackend),
+            self.backend.wayland_subscription().map(Message::WaylandIn),
             listen_with(|e, _, _| match e {
                 iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
                     event::wayland::Event::Seat(e, seat),

@@ -43,7 +43,12 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
-use crate::compositor::{WindowHandle, WindowInfo};
+use crate::{
+    app_tray,
+    compositor::{WindowHandle, WindowInfo},
+};
+
+use super::WaylandOutgoing;
 
 struct WaylandData {
     _conn: Connection,
@@ -55,7 +60,7 @@ struct WaylandData {
     activation_state: Option<ActivationState>,
     registry_state: RegistryState,
     seat_state: SeatState,
-    tx: UnboundedSender<CosmicWaylandMessage>,
+    tx: UnboundedSender<CosmicIncoming>,
     exit: bool,
 }
 
@@ -73,7 +78,7 @@ impl OutputHandler for WaylandData {
         if let Some(info) = self.output_state.info(&output) {
             let _ = self
                 .tx
-                .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Add(
+                .unbounded_send(CosmicIncoming::Output(OutputUpdate::Add(
                     output.clone(),
                     info.clone(),
                 )));
@@ -89,7 +94,7 @@ impl OutputHandler for WaylandData {
         if let Some(info) = self.output_state.info(&output) {
             let _ = self
                 .tx
-                .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Update(
+                .unbounded_send(CosmicIncoming::Output(OutputUpdate::Update(
                     output.clone(),
                     info.clone(),
                 )));
@@ -104,9 +109,7 @@ impl OutputHandler for WaylandData {
     ) {
         let _ = self
             .tx
-            .unbounded_send(CosmicWaylandMessage::Output(OutputUpdate::Remove(
-                output.clone(),
-            )));
+            .unbounded_send(CosmicIncoming::Output(OutputUpdate::Remove(output.clone())));
     }
 }
 
@@ -130,7 +133,7 @@ impl WorkspaceHandler for WaylandData {
             .collect::<Vec<_>>();
         let _ = self
             .tx
-            .unbounded_send(CosmicWaylandMessage::Workspace(active_workspaces.clone()));
+            .unbounded_send(CosmicIncoming::Workspace(active_workspaces.clone()));
     }
 }
 
@@ -166,14 +169,12 @@ impl ActivationHandler for WaylandData {
     type RequestData = ExecRequestData;
 
     fn new_token(&mut self, token: String, data: &Self::RequestData) {
-        let _ = self
-            .tx
-            .unbounded_send(CosmicWaylandMessage::ActivationToken {
-                token: Some(token),
-                app_id: data.app_id().map(|x| x.to_owned()),
-                exec: data.exec.clone(),
-                gpu_idx: data.gpu_idx,
-            });
+        let _ = self.tx.unbounded_send(CosmicIncoming::ActivationToken {
+            token: Some(token),
+            app_id: data.app_id().map(|x| x.to_owned()),
+            exec: data.exec.clone(),
+            gpu_idx: data.gpu_idx,
+        });
     }
 }
 
@@ -252,7 +253,7 @@ impl ToplevelInfoHandler for WaylandData {
         if let Some(info) = self.toplevel_info_state.info(toplevel) {
             let _ = self
                 .tx
-                .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Add(
+                .unbounded_send(CosmicIncoming::Toplevel(ToplevelUpdate::Add(
                     toplevel.clone(),
                     info.clone(),
                 )));
@@ -270,7 +271,7 @@ impl ToplevelInfoHandler for WaylandData {
         if let Some(info) = self.toplevel_info_state.info(toplevel) {
             let _ = self
                 .tx
-                .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Update(
+                .unbounded_send(CosmicIncoming::Toplevel(ToplevelUpdate::Update(
                     toplevel.clone(),
                     info.clone(),
                 )));
@@ -285,13 +286,13 @@ impl ToplevelInfoHandler for WaylandData {
     ) {
         let _ = self
             .tx
-            .unbounded_send(CosmicWaylandMessage::Toplevel(ToplevelUpdate::Remove(
+            .unbounded_send(CosmicIncoming::Toplevel(ToplevelUpdate::Remove(
                 toplevel.clone(),
             )));
     }
 }
 
-fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<WaylandRequest>) {
+fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandRequest>) {
     let socket = std::env::var("X_PRIVILEGED_WAYLAND_SOCKET")
         .ok()
         .and_then(|fd| {
@@ -300,11 +301,13 @@ fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<Waylan
                 .map(|fd| unsafe { UnixStream::from_raw_fd(fd) })
         });
 
-    let conn = if let Some(socket) = socket {
-        Connection::from_socket(socket).unwrap()
-    } else {
-        Connection::connect_to_env().unwrap()
-    };
+    // let conn = if let Some(socket) = socket {
+    //     Connection::from_socket(socket).unwrap()
+    // } else {
+    //     Connection::connect_to_env().unwrap()
+    // };
+    let conn = Connection::connect_to_env().unwrap();
+
     let (globals, event_queue) = registry_queue_init(&conn).unwrap();
 
     let mut event_loop = EventLoop::<WaylandData>::try_new().unwrap();
@@ -356,14 +359,12 @@ fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<Waylan
                             },
                         );
                     } else {
-                        let _ = state
-                            .tx
-                            .unbounded_send(CosmicWaylandMessage::ActivationToken {
-                                token: None,
-                                app_id: Some(app_id),
-                                exec,
-                                gpu_idx,
-                            });
+                        let _ = state.tx.unbounded_send(CosmicIncoming::ActivationToken {
+                            token: None,
+                            app_id: Some(app_id),
+                            exec,
+                            gpu_idx,
+                        });
                     }
                 }
             },
@@ -401,7 +402,7 @@ fn wayland_handler(tx: UnboundedSender<CosmicWaylandMessage>, rx: Channel<Waylan
 }
 
 #[derive(Clone, Debug)]
-pub enum CosmicWaylandMessage {
+pub enum CosmicIncoming {
     Init(channel::Sender<WaylandRequest>),
     Finished,
     Toplevel(ToplevelUpdate),
@@ -463,12 +464,12 @@ pub enum State {
     Finished,
 }
 
-pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<CosmicWaylandMessage>>>> =
+pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<CosmicIncoming>>>> =
     Lazy::new(|| Mutex::new(None));
 
 async fn start_listening(
     state: State,
-    output: &mut futures::channel::mpsc::Sender<CosmicWaylandMessage>,
+    output: &mut futures::channel::mpsc::Sender<CosmicIncoming>,
 ) -> State {
     match state {
         State::Waiting => {
@@ -481,7 +482,7 @@ async fn start_listening(
                         wayland_handler(toplevel_tx, calloop_rx);
                     });
                     *guard = Some(toplevel_rx);
-                    _ = output.send(CosmicWaylandMessage::Init(calloop_tx)).await;
+                    _ = output.send(CosmicIncoming::Init(calloop_tx)).await;
                 }
                 guard.as_mut().unwrap()
             };
@@ -491,7 +492,7 @@ async fn start_listening(
                     State::Waiting
                 }
                 None => {
-                    _ = output.send(CosmicWaylandMessage::Finished).await;
+                    _ = output.send(CosmicIncoming::Finished).await;
                     State::Finished
                 }
             }
@@ -512,9 +513,9 @@ impl CosmicCompBackend {
         }
     }
 
-    pub fn wayland_subscription(&self) -> iced::Subscription<CosmicWaylandMessage> {
+    pub fn wayland_subscription(&self) -> iced::Subscription<CosmicIncoming> {
         subscription::channel(
-            std::any::TypeId::of::<CosmicWaylandMessage>(),
+            std::any::TypeId::of::<CosmicIncoming>(),
             50,
             move |mut output| async move {
                 let mut state = State::Waiting;
@@ -526,24 +527,23 @@ impl CosmicCompBackend {
         )
     }
 
-    pub fn handle_message(
+    pub fn handle_incoming(
         &mut self,
         app_tray: &mut crate::app_tray::AppTray,
-        event: CosmicWaylandMessage,
+        incoming: CosmicIncoming,
     ) -> Option<iced::Command<crate::Message>> {
-        match event {
-            CosmicWaylandMessage::Init(wayland_sender) => {
+        match incoming {
+            CosmicIncoming::Init(wayland_sender) => {
                 self.wayland_sender.replace(wayland_sender);
                 None
             }
-            CosmicWaylandMessage::Finished => {
+            CosmicIncoming::Finished => {
                 println!("WHY?");
                 None
             }
-            CosmicWaylandMessage::Toplevel(toplevel_update) => match toplevel_update {
+            CosmicIncoming::Toplevel(toplevel_update) => match toplevel_update {
                 ToplevelUpdate::Add(handle, info) => {
                     let app_id = info.app_id.clone();
-                    println!("Adding toplevel with app_id {} to list!", &app_id);
                     if app_tray.active_toplevels.contains_key(&app_id) {
                         app_tray
                             .active_toplevels
@@ -561,15 +561,16 @@ impl CosmicCompBackend {
                                 )]),
                             },
                         );
+                        println!("Inserted {} into the list", &app_id);
                     }
                     None
                 }
                 ToplevelUpdate::Update(handle, info) => {
                     // TODO probably want to make sure it is removed
                     if info.app_id.is_empty() {
-                        app_tray.active_toplevels.remove(&info.app_id);
                         return Some(iced::Command::none());
                     } else if !app_tray.active_toplevels.contains_key(&info.app_id) {
+                        println!("What");
                         return Some(iced::Command::none());
                     }
 
@@ -611,6 +612,27 @@ impl CosmicCompBackend {
                 }
             },
             _ => None,
+        }
+    }
+
+    pub fn handle_outgoing(
+        &mut self,
+        _app_tray: &mut crate::app_tray::AppTray,
+        outgoing: WaylandOutgoing,
+    ) -> Option<iced::Command<crate::Message>> {
+        match outgoing {
+            WaylandOutgoing::Exec(app_id, exec) => {
+                println!("{:?}",_app_tray.active_toplevels.keys());
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    println!("Sending exec request! {}, {}", &app_id, &exec);
+                    let _ = tx.send(WaylandRequest::TokenRequest {
+                        app_id,
+                        exec,
+                        gpu_idx: None,
+                    });
+                }
+                None
+            }
         }
     }
 }
