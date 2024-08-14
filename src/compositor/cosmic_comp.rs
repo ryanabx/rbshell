@@ -1,6 +1,9 @@
-use std::os::{
-    fd::{FromRawFd, RawFd},
-    unix::net::UnixStream,
+use std::{
+    collections::HashMap,
+    os::{
+        fd::{FromRawFd, RawFd},
+        unix::net::UnixStream,
+    },
 };
 
 use cctk::{
@@ -9,7 +12,7 @@ use cctk::{
         output::{OutputHandler, OutputInfo, OutputState},
         reexports::{
             calloop::{
-                channel::{self, Channel},
+                channel::{self, Channel, Sender},
                 EventLoop,
             },
             calloop_wayland_source::WaylandSource,
@@ -39,6 +42,8 @@ use iced::{
     subscription,
 };
 use once_cell::sync::Lazy;
+
+use super::CompositorBackend;
 
 struct WaylandData {
     _conn: Connection,
@@ -458,19 +463,6 @@ pub enum State {
     Finished,
 }
 
-pub fn wayland_subscription() -> iced::Subscription<CosmicWaylandMessage> {
-    subscription::channel(
-        std::any::TypeId::of::<CosmicWaylandMessage>(),
-        50,
-        move |mut output| async move {
-            let mut state = State::Waiting;
-
-            loop {
-                state = start_listening(state, &mut output).await;
-            }
-        },
-    )
-}
 
 pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<CosmicWaylandMessage>>>> =
     Lazy::new(|| Mutex::new(None));
@@ -506,5 +498,112 @@ async fn start_listening(
             }
         }
         State::Finished => iced::futures::future::pending().await,
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CosmicCompBackend {
+    wayland_sender: Option<Sender<WaylandRequest>>,
+}
+
+impl CosmicCompBackend {
+    pub fn new() -> Self {
+        Self {
+            wayland_sender: None
+        }
+    }
+
+    pub fn wayland_subscription(&self) -> iced::Subscription<CosmicWaylandMessage> {
+        subscription::channel(
+            std::any::TypeId::of::<CosmicWaylandMessage>(),
+            50,
+            move |mut output| async move {
+                let mut state = State::Waiting;
+
+                loop {
+                    state = start_listening(state, &mut output).await;
+                }
+            },
+        )
+    }
+
+    pub fn handle_message(
+        &mut self,
+        app_tray: &mut crate::app_tray::AppTray,
+        event: CosmicWaylandMessage,
+    ) -> Option<iced::Command<crate::Message>> {
+        match event {
+            CosmicWaylandMessage::Init(wayland_sender) => {
+                self.wayland_sender.replace(wayland_sender);
+                None
+            }
+            CosmicWaylandMessage::Finished => {
+                println!("WHY?");
+                None
+            }
+            CosmicWaylandMessage::Toplevel(toplevel_update) => match toplevel_update {
+                ToplevelUpdate::Add(handle, info) => {
+                    let app_id = info.app_id.clone();
+                    println!("Adding toplevel with app_id {} to list!", &app_id);
+                    if app_tray.active_toplevels.contains_key(&app_id) {
+                        app_tray
+                            .active_toplevels
+                            .get_mut(&info.app_id)
+                            .unwrap()
+                            .toplevels
+                            .insert(handle, info);
+                    } else {
+                        app_tray.active_toplevels.insert(
+                            app_id.clone(),
+                            crate::app_tray::ApplicationGroup {
+                                toplevels: HashMap::from([(handle, info.clone())]),
+                            },
+                        );
+                    }
+                    None
+                }
+                ToplevelUpdate::Update(handle, info) => {
+                    // TODO probably want to make sure it is removed
+                    if info.app_id.is_empty() {
+                        app_tray.active_toplevels.remove(&info.app_id);
+                        return Some(iced::Command::none());
+                    } else if !app_tray.active_toplevels.contains_key(&info.app_id) {
+                        return Some(iced::Command::none());
+                    }
+
+                    for (t_handle, t_info) in &mut app_tray
+                        .active_toplevels
+                        .get_mut(&info.app_id)
+                        .unwrap()
+                        .toplevels
+                    {
+                        if &handle == t_handle {
+                            *t_info = info;
+                            break;
+                        }
+                    }
+
+                    None
+                }
+                ToplevelUpdate::Remove(handle) => {
+                    let mut target_app_id: Option<String> = None;
+                    for (app_id, app_info) in app_tray.active_toplevels.iter_mut() {
+                        if app_info.toplevels.contains_key(&handle) {
+                            println!("Removing toplevel with app_id {} from list!", &app_id);
+                            app_info.toplevels.remove(&handle);
+                            if app_info.toplevels.is_empty() {
+                                target_app_id = Some(app_id.clone());
+                            }
+                            break;
+                        }
+                    }
+                    if let Some(app_id) = target_app_id {
+                        app_tray.active_toplevels.remove(&app_id);
+                    }
+                    None
+                }
+            },
+            _ => None,
+        }
     }
 }

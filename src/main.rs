@@ -1,6 +1,6 @@
 use app_tray::AppTray;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
-use compositor::WaylandMessage;
+use compositor::{CompositorBackend, WaylandEvent, WindowHandle};
 use config::{AppTrayApp, PanelConfig};
 use iced::{
     application::{
@@ -33,6 +33,7 @@ fn main() -> Result<(), iced::Error> {
 struct Panel<'a> {
     panel_config: PanelConfig<'a>,
     app_tray: AppTray<'a>,
+    backend: CompositorBackend,
 }
 
 impl<'a> Default for Panel<'a> {
@@ -40,6 +41,7 @@ impl<'a> Default for Panel<'a> {
         Self {
             panel_config: PanelConfig::default(),
             app_tray: AppTray::default(),
+            backend: CompositorBackend::new(),
         }
     }
 }
@@ -47,9 +49,15 @@ impl<'a> Default for Panel<'a> {
 #[derive(Clone, Debug)]
 pub enum Message {
     Panic,
-    Wayland(WaylandMessage),
+    WaylandBackend(WaylandEvent),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
+}
+
+#[derive(Clone, Debug)]
+pub enum WindowOperationMessage {
+    Activate(WindowHandle),
+    Minimize(WindowHandle),
 }
 
 impl<'a> Application for Panel<'a> {
@@ -72,8 +80,8 @@ impl<'a> Application for Panel<'a> {
             Message::Panic => {
                 panic!("Panic button pressed hehe");
             }
-            Message::Wayland(evt) => {
-                self.app_tray.wayland_event(evt);
+            Message::WaylandBackend(evt) => {
+                self.backend.handle_message(&mut self.app_tray, evt);
             }
             Message::NewSeat(_) => {
                 println!("New seat!");
@@ -127,7 +135,9 @@ impl<'a> Application for Panel<'a> {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         Subscription::batch(vec![
-            compositor::wayland_subscription().map(Message::Wayland),
+            self.backend
+                .wayland_subscription()
+                .map(Message::WaylandBackend),
             listen_with(|e, _, _| match e {
                 iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
                     event::wayland::Event::Seat(e, seat),
