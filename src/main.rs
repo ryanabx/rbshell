@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 
 use app_tray::{AppTray, ApplicationGroup};
 use cctk::wayland_client::protocol::wl_seat::WlSeat;

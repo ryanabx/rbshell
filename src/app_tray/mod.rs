@@ -5,8 +5,7 @@ use freedesktop_desktop_entry::DesktopEntry;
 use iced::{widget::button, Background, Border, Color, Length, Radius, Theme};
 
 use crate::{
-    compositor::{WaylandOutgoing, WindowHandle, WindowInfo},
-    AppTrayRequest, Message, WindowOperationMessage,
+    compositor::{WaylandOutgoing, WindowHandle, WindowInfo}, Message,
 };
 
 pub mod desktop_entry;

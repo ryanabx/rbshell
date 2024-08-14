@@ -4,7 +4,7 @@ use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
 
-use crate::{app_tray::AppTray, Panel};
+use crate::app_tray::AppTray;
 
 pub mod cosmic_comp;
 pub mod wlr;

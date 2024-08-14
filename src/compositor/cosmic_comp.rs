@@ -43,10 +43,7 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
-use crate::{
-    app_tray,
-    compositor::{WindowHandle, WindowInfo},
-};
+use crate::compositor::{WindowHandle, WindowInfo};
 
 use super::WaylandOutgoing;
 
@@ -301,12 +298,11 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
                 .map(|fd| unsafe { UnixStream::from_raw_fd(fd) })
         });
 
-    // let conn = if let Some(socket) = socket {
-    //     Connection::from_socket(socket).unwrap()
-    // } else {
-    //     Connection::connect_to_env().unwrap()
-    // };
-    let conn = Connection::connect_to_env().unwrap();
+    let conn = if let Some(socket) = socket {
+        Connection::from_socket(socket).unwrap()
+    } else {
+        Connection::connect_to_env().unwrap()
+    };
 
     let (globals, event_queue) = registry_queue_init(&conn).unwrap();
 
