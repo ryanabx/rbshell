@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
-use cctk::{sctk::reexports::calloop::channel::Sender, toplevel_info::ToplevelInfo};
+use cctk::toplevel_info::ToplevelInfo;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
-use iced::Command;
 
-use crate::compositor::{
-    cosmic_comp::{CosmicWaylandMessage, ToplevelUpdate, WaylandRequest}, CompositorBackend, WaylandEvent
-};
 
 pub mod desktop_entry;
 

@@ -43,7 +43,6 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
-use super::CompositorBackend;
 
 struct WaylandData {
     _conn: Connection,
