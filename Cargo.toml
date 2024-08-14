@@ -6,6 +6,7 @@ edition = "2021"
 license = "MIT"
 description = "Layer shell panel for wayland desktops"
 repository = "https://github.com/ryanabx/ryanabx-shell"
+readme = "README.dj"
 
 [dependencies]
 freedesktop-desktop-entry = "0.7.0"
