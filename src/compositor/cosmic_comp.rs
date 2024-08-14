@@ -43,6 +43,7 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
+use crate::compositor::{WindowHandle, WindowInfo};
 
 struct WaylandData {
     _conn: Connection,
@@ -462,7 +463,6 @@ pub enum State {
     Finished,
 }
 
-
 pub static WAYLAND_RX: Lazy<Mutex<Option<UnboundedReceiver<CosmicWaylandMessage>>>> =
     Lazy::new(|| Mutex::new(None));
 
@@ -508,7 +508,7 @@ pub struct CosmicCompBackend {
 impl CosmicCompBackend {
     pub fn new() -> Self {
         Self {
-            wayland_sender: None
+            wayland_sender: None,
         }
     }
 
@@ -550,12 +550,15 @@ impl CosmicCompBackend {
                             .get_mut(&info.app_id)
                             .unwrap()
                             .toplevels
-                            .insert(handle, info);
+                            .insert(WindowHandle::Cosmic(handle), WindowInfo::Cosmic(info));
                     } else {
                         app_tray.active_toplevels.insert(
                             app_id.clone(),
                             crate::app_tray::ApplicationGroup {
-                                toplevels: HashMap::from([(handle, info.clone())]),
+                                toplevels: HashMap::from([(
+                                    WindowHandle::Cosmic(handle),
+                                    WindowInfo::Cosmic(info.clone()),
+                                )]),
                             },
                         );
                     }
@@ -576,9 +579,11 @@ impl CosmicCompBackend {
                         .unwrap()
                         .toplevels
                     {
-                        if &handle == t_handle {
-                            *t_info = info;
-                            break;
+                        if let WindowHandle::Cosmic(c_handle) = t_handle {
+                            if &handle == c_handle {
+                                *t_info = WindowInfo::Cosmic(info);
+                                break;
+                            }
                         }
                     }
 
@@ -587,9 +592,12 @@ impl CosmicCompBackend {
                 ToplevelUpdate::Remove(handle) => {
                     let mut target_app_id: Option<String> = None;
                     for (app_id, app_info) in app_tray.active_toplevels.iter_mut() {
-                        if app_info.toplevels.contains_key(&handle) {
+                        if app_info
+                            .toplevels
+                            .contains_key(&WindowHandle::Cosmic(handle.clone()))
+                        {
                             println!("Removing toplevel with app_id {} from list!", &app_id);
-                            app_info.toplevels.remove(&handle);
+                            app_info.toplevels.remove(&WindowHandle::Cosmic(handle));
                             if app_info.toplevels.is_empty() {
                                 target_app_id = Some(app_id.clone());
                             }

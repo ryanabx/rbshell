@@ -1,5 +1,6 @@
 use std::env;
 
+use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
 
@@ -11,6 +12,8 @@ pub mod wlr;
 #[derive(Clone, Debug)]
 pub enum CompositorBackend {
     Cosmic(CosmicCompBackend),
+    #[allow(dead_code)]
+    NotSupported,
 }
 
 impl CompositorBackend {
@@ -30,6 +33,7 @@ impl CompositorBackend {
     pub fn wayland_subscription(&self) -> iced::Subscription<WaylandEvent> {
         match self {
             Self::Cosmic(backend) => backend.wayland_subscription().map(WaylandEvent::Cosmic),
+            Self::NotSupported => unreachable!(),
         }
     }
 
@@ -42,6 +46,8 @@ impl CompositorBackend {
             (Self::Cosmic(backend), WaylandEvent::Cosmic(evt)) => {
                 backend.handle_message(app_tray, evt)
             }
+            (Self::NotSupported, _) => unreachable!(),
+            (_, WaylandEvent::NotSupported) => unreachable!(),
         }
     }
 }
@@ -49,9 +55,20 @@ impl CompositorBackend {
 #[derive(Clone, Debug)]
 pub enum WaylandEvent {
     Cosmic(cosmic_comp::CosmicWaylandMessage),
+    #[allow(dead_code)]
+    NotSupported,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum WindowHandle {
+    Cosmic(ZcosmicToplevelHandleV1),
+    #[allow(dead_code)]
+    NotSupported,
 }
 
 #[derive(Clone, Debug)]
-pub enum WindowHandle {
-    Cosmic(ZcosmicToplevelHandleV1),
+pub enum WindowInfo {
+    Cosmic(ToplevelInfo),
+    #[allow(dead_code)]
+    NotSupported,
 }
