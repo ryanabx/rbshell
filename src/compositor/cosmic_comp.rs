@@ -43,7 +43,10 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
-use crate::compositor::{WindowHandle, WindowInfo};
+use crate::{
+    app_tray::{self, AppTray},
+    compositor::{WindowHandle, WindowInfo},
+};
 
 use super::WaylandOutgoing;
 
@@ -500,12 +503,18 @@ async fn start_listening(
 #[derive(Debug, Clone)]
 pub struct CosmicCompBackend {
     wayland_sender: Option<Sender<WaylandRequest>>,
+    active_workspaces: Vec<ZcosmicWorkspaceHandleV1>,
+    output_list: HashMap<WlOutput, OutputInfo>,
+    current_output: String,
 }
 
 impl CosmicCompBackend {
     pub fn new() -> Self {
         Self {
             wayland_sender: None,
+            active_workspaces: Vec::new(),
+            output_list: HashMap::new(),
+            current_output: "".to_string(),
         }
     }
 
@@ -607,6 +616,24 @@ impl CosmicCompBackend {
                     None
                 }
             },
+            CosmicIncoming::Workspace(workspaces) => {
+                self.active_workspaces = workspaces;
+                None
+            }
+            CosmicIncoming::Output(output_update) => match output_update {
+                OutputUpdate::Add(output, info) => {
+                    self.output_list.insert(output, info);
+                    None
+                }
+                OutputUpdate::Update(output, info) => {
+                    self.output_list.insert(output, info);
+                    None
+                }
+                OutputUpdate::Remove(output) => {
+                    self.output_list.remove(&output);
+                    None
+                }
+            },
             _ => None,
         }
     }
@@ -630,5 +657,42 @@ impl CosmicCompBackend {
                 None
             }
         }
+    }
+
+    pub fn active_window(&self, app_tray: &AppTray) -> Option<WindowHandle> {
+        if self.active_workspaces.is_empty() {
+            println!("Active workspaces is empty. Exiting");
+            return None;
+        }
+        let mut focused_toplevels: Vec<ZcosmicToplevelHandleV1> = Vec::new();
+        let active_workspaces = self.active_workspaces.clone();
+        for (_, app_group) in app_tray.active_toplevels.iter() {
+            for (handle, info) in &app_group.toplevels {
+                if let (WindowHandle::Cosmic(t_handle), WindowInfo::Cosmic(t_info)) = (handle, info)
+                {
+                    println!("{:?}", t_info.state);
+                    println!("{:?}", t_info.output);
+                    if t_info.state.contains(&cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::State::Activated)
+                        && active_workspaces
+                            .iter()
+                            .any(|workspace| t_info.workspace.contains(workspace))
+                        && t_info.output.iter().any(|x| {
+                            self.output_list.get(x).is_some_and(|val| {
+                                println!("{:?}",val.name.as_ref());
+                                true // TODO: Output stuff
+                                // val.name.as_ref().is_some_and(|n| *n == self.current_output)
+                            })
+                        })
+                    {
+                        focused_toplevels.push(t_handle.clone());
+                    }
+                } else {
+                    panic!("Unknown window handle or window info");
+                }
+            }
+        }
+        focused_toplevels
+            .first()
+            .map(|f| WindowHandle::Cosmic(f.clone()))
     }
 }

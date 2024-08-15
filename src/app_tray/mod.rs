@@ -44,6 +44,7 @@ pub fn get_tray_widget<'a>(
     app_id: &str,
     desktop_entry: Option<&DesktopEntry<'a>>,
     app_info: ApplicationGroup,
+    active_window: Option<WindowHandle>,
 ) -> iced::widget::Button<'a, crate::Message> {
     // println!("app_id: {}", app_id);
     // if app_id == "Google-chrome" || app_id == "com.google.chrome" {
@@ -61,7 +62,7 @@ pub fn get_tray_widget<'a>(
                         .content_fit(iced::ContentFit::Contain)
                         .width(Length::Fill)
                         .height(Length::Fill),
-                    get_horizontal_rule(&app_info)
+                    get_horizontal_rule(&app_info, &active_window.as_ref())
                 ])
             } else {
                 iced::widget::button(column![
@@ -69,7 +70,7 @@ pub fn get_tray_widget<'a>(
                         .content_fit(iced::ContentFit::Contain)
                         .width(Length::Fill)
                         .height(Length::Fill),
-                    get_horizontal_rule(&app_info)
+                    get_horizontal_rule(&app_info, &active_window.as_ref())
                 ])
             }
         }
@@ -80,7 +81,9 @@ pub fn get_tray_widget<'a>(
     .width(Length::Fill)
     .height(Length::Fill)
     .padding(8)
-    .style(move |theme, status| tray_button_style(theme, status, &app_info))
+    .style(move |theme, status| {
+        tray_button_style(theme, status, &app_info, &active_window.as_ref())
+    })
     .on_press_maybe(desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
         Message::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
     }))
@@ -93,7 +96,10 @@ pub fn get_tray_widget<'a>(
     // })
 }
 
-fn get_horizontal_rule<'a>(app_info: &ApplicationGroup) -> Container<'a, Message> {
+fn get_horizontal_rule<'a>(
+    app_info: &ApplicationGroup,
+    active_window: &Option<&WindowHandle>,
+) -> Container<'a, Message> {
     if app_info.toplevels.is_empty() {
         iced::widget::container(iced::widget::Space::new(
             Length::Fixed(8.0),
@@ -108,7 +114,13 @@ fn get_horizontal_rule<'a>(app_info: &ApplicationGroup) -> Container<'a, Message
                     radius: 4.into(),
                     fill_mode: iced::widget::rule::FillMode::Full,
                 })
-                .width(Length::Fixed(8.0)),
+                .width(Length::Fixed(
+                    if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
+                        16.0
+                    } else {
+                        8.0
+                    },
+                )),
         )
     }
     .center_x(Length::Fill)
@@ -118,14 +130,25 @@ fn get_default_icon() -> Option<PathBuf> {
     freedesktop_icons::lookup("wayland").with_cache().find()
 }
 
-fn tray_button_style(
+fn tray_button_style<'a>(
     _theme: &Theme,
     status: button::Status,
     app_info: &ApplicationGroup,
+    active_window: &Option<&WindowHandle>,
 ) -> button::Style {
-    if app_info.toplevels.is_empty() {
-        button::Style {
-            background: Some(Background::Color(Color {
+    let (border_color, background_color) = if app_info.toplevels.is_empty() {
+        (
+            Color {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+                a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+                    0.2
+                } else {
+                    0.0
+                },
+            },
+            Color {
                 r: 1.0,
                 g: 1.0,
                 b: 1.0,
@@ -134,50 +157,65 @@ fn tray_button_style(
                 } else {
                     0.0
                 },
-            })),
-            border: Border {
-                radius: Radius::from(8.0),
-                color: Color {
+            },
+        )
+    } else {
+        if active_window.is_some_and(|x| app_info.toplevels.contains_key(x)) {
+            (
+                Color {
                     r: 1.0,
                     g: 1.0,
                     b: 1.0,
                     a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
                         0.3
                     } else {
-                        0.0
+                        0.2
                     },
                 },
-                width: 1.0,
-            },
-            ..Default::default()
-        }
-    } else {
-        button::Style {
-            background: Some(Background::Color(Color {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-                a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                    0.2
-                } else {
-                    0.1
-                },
-            })),
-            border: Border {
-                radius: Radius::from(8.0),
-                color: Color {
+                Color {
                     r: 1.0,
                     g: 1.0,
                     b: 1.0,
                     a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.4
-                    } else {
                         0.2
+                    } else {
+                        0.1
                     },
                 },
-                width: 1.0,
-            },
-            ..Default::default()
+            )
+        } else {
+            (
+                Color {
+                    r: 1.0,
+                    g: 1.0,
+                    b: 1.0,
+                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+                        0.2
+                    } else {
+                        0.1
+                    },
+                },
+                Color {
+                    r: 1.0,
+                    g: 1.0,
+                    b: 1.0,
+                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+                        0.1
+                    } else {
+                        0.05
+                    },
+                },
+            )
         }
+    };
+
+    button::Style {
+        background: Some(Background::Color(background_color)),
+        border: Border {
+            radius: Radius::from(8.0),
+            color: border_color,
+            width: 1.0,
+        },
+        ..Default::default()
     }
 }

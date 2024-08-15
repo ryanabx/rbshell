@@ -61,6 +61,13 @@ impl CompositorBackend {
             _ => todo!(),
         }
     }
+
+    pub fn active_window<'a>(&self, app_tray: &AppTray<'a>) -> Option<WindowHandle> {
+        match self {
+            Self::Cosmic(backend) => backend.active_window(app_tray),
+            _ => todo!(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
