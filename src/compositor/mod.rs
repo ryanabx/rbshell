@@ -80,6 +80,8 @@ pub enum WaylandIncoming {
 #[derive(Clone, Debug)]
 pub enum WaylandOutgoing {
     Exec(String, String),
+    Toggle(WindowHandle),
+    Activate(WindowHandle),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

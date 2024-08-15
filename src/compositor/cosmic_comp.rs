@@ -640,12 +640,12 @@ impl CosmicCompBackend {
 
     pub fn handle_outgoing(
         &mut self,
-        _app_tray: &mut crate::app_tray::AppTray,
+        app_tray: &mut crate::app_tray::AppTray,
         outgoing: WaylandOutgoing,
     ) -> Option<iced::Command<crate::Message>> {
         match outgoing {
             WaylandOutgoing::Exec(app_id, exec) => {
-                println!("{:?}", _app_tray.active_toplevels.keys());
+                println!("{:?}", app_tray.active_toplevels.keys());
                 if let Some(tx) = self.wayland_sender.as_ref() {
                     println!("Sending exec request! {}, {}", &app_id, &exec);
                     let _ = tx.send(WaylandRequest::TokenRequest {
@@ -655,6 +655,45 @@ impl CosmicCompBackend {
                     });
                 }
                 None
+            }
+            WaylandOutgoing::Toggle(window) => {
+                match window {
+                    WindowHandle::Cosmic(toplevel) => {
+                        if let Some(tx) = self.wayland_sender.as_ref() {
+                            let _ = tx.send(WaylandRequest::Toplevel(
+                                if self
+                                    .active_window(app_tray)
+                                    .is_some_and(|x| x == WindowHandle::Cosmic(toplevel.clone()))
+                                {
+                                    ToplevelRequest::Minimize(toplevel)
+                                } else {
+                                    ToplevelRequest::Activate(toplevel)
+                                },
+                            ));
+                        }
+                        // if let Some(p) = self.popup.take() {
+                        //     return destroy_popup(p.id);
+                        // }
+                        None
+                    }
+                    _ => panic!(),
+                }
+            }
+            WaylandOutgoing::Activate(window) => {
+                match window {
+                    WindowHandle::Cosmic(toplevel) => {
+                        if let Some(tx) = self.wayland_sender.as_ref() {
+                            let _ = tx.send(WaylandRequest::Toplevel(ToplevelRequest::Activate(
+                                toplevel,
+                            )));
+                        }
+                        // if let Some(p) = self.popup.take() {
+                        //     return destroy_popup(p.id);
+                        // }
+                        None
+                    }
+                    _ => panic!(),
+                }
             }
         }
     }

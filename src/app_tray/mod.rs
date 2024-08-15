@@ -46,10 +46,6 @@ pub fn get_tray_widget<'a>(
     app_info: ApplicationGroup,
     active_window: Option<WindowHandle>,
 ) -> iced::widget::Button<'a, crate::Message> {
-    // println!("app_id: {}", app_id);
-    // if app_id == "Google-chrome" || app_id == "com.google.chrome" {
-    //     println!("ODIUAOIDUWIO");
-    // }
     let icon_path = desktop_entry
         .and_then(|entry| entry.icon())
         .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
@@ -80,13 +76,21 @@ pub fn get_tray_widget<'a>(
     }
     .width(Length::Fill)
     .height(Length::Fill)
-    .padding(8)
+    .padding(4)
+    .on_press_maybe(if app_info.toplevels.is_empty() {
+        desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
+            Message::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
+        })
+    } else if app_info.toplevels.len() == 1 {
+        Some(Message::WaylandOut(WaylandOutgoing::Toggle(
+            app_info.toplevels.keys().next().unwrap().clone(),
+        )))
+    } else {
+        todo!("Not yet impl")
+    })
     .style(move |theme, status| {
         tray_button_style(theme, status, &app_info, &active_window.as_ref())
     })
-    .on_press_maybe(desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
-        Message::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
-    }))
     // .on_press_maybe(if toplevels.is_empty() {
     //     launch_on_preferred_gpu(desktop_info, gpus)
     // } else if toplevels.len() == 1 {
@@ -102,7 +106,7 @@ fn get_horizontal_rule<'a>(
 ) -> Container<'a, Message> {
     if app_info.toplevels.is_empty() {
         iced::widget::container(iced::widget::Space::new(
-            Length::Fixed(8.0),
+            Length::Fixed(6.0),
             Length::Fixed(2.0),
         ))
     } else {
@@ -116,9 +120,9 @@ fn get_horizontal_rule<'a>(
                 })
                 .width(Length::Fixed(
                     if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
-                        16.0
+                        12.0
                     } else {
-                        8.0
+                        6.0
                     },
                 )),
         )
