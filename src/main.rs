@@ -142,7 +142,6 @@ impl<'a> Application for Panel<'a> {
                 let entry = self.app_tray.de_cache.0.get(&app_id);
                 let active_window = self.backend.active_window(&self.app_tray);
 
-                // println!("{}, {:?}", &app_id, entry.map(|x| x.appid.clone()));
                 app_tray::get_tray_widget(&app_id, entry, group, active_window.map(|f| f.clone()))
             })
             .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(6)));

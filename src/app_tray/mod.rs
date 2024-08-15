@@ -86,7 +86,8 @@ pub fn get_tray_widget<'a>(
             app_info.toplevels.keys().next().unwrap().clone(),
         )))
     } else {
-        todo!("Not yet impl")
+        None
+        // TODO
     })
     .style(move |theme, status| {
         tray_button_style(theme, status, &app_info, &active_window.as_ref())

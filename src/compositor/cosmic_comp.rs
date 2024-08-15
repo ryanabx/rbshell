@@ -258,7 +258,7 @@ impl ToplevelInfoHandler for WaylandData {
                     info.clone(),
                 )));
         } else {
-            println!("WTF");
+            panic!("Not sure how this would happen. cosmic-client-toolkit did something wrong.");
         }
     }
 
@@ -393,7 +393,7 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
 
     loop {
         if app_data.exit {
-            println!("Exiting");
+            println!("Exiting...");
             break;
         }
         event_loop.dispatch(None, &mut app_data).unwrap();
@@ -542,10 +542,7 @@ impl CosmicCompBackend {
                 self.wayland_sender.replace(wayland_sender);
                 None
             }
-            CosmicIncoming::Finished => {
-                println!("WHY?");
-                None
-            }
+            CosmicIncoming::Finished => None,
             CosmicIncoming::Toplevel(toplevel_update) => match toplevel_update {
                 ToplevelUpdate::Add(handle, info) => {
                     let app_id = info.app_id.clone();
@@ -566,7 +563,6 @@ impl CosmicCompBackend {
                                 )]),
                             },
                         );
-                        println!("Inserted {} into the list", &app_id);
                     }
                     None
                 }
@@ -575,7 +571,6 @@ impl CosmicCompBackend {
                     if info.app_id.is_empty() {
                         return Some(iced::Command::none());
                     } else if !app_tray.active_toplevels.contains_key(&info.app_id) {
-                        println!("What");
                         return Some(iced::Command::none());
                     }
 
@@ -602,7 +597,6 @@ impl CosmicCompBackend {
                             .toplevels
                             .contains_key(&WindowHandle::Cosmic(handle.clone()))
                         {
-                            println!("Removing toplevel with app_id {} from list!", &app_id);
                             app_info.toplevels.remove(&WindowHandle::Cosmic(handle));
                             if app_info.toplevels.is_empty() {
                                 target_app_id = Some(app_id.clone());
@@ -645,9 +639,8 @@ impl CosmicCompBackend {
     ) -> Option<iced::Command<crate::Message>> {
         match outgoing {
             WaylandOutgoing::Exec(app_id, exec) => {
-                println!("{:?}", app_tray.active_toplevels.keys());
+                println!("Sending a tokenrequest {} {}", &app_id, &exec);
                 if let Some(tx) = self.wayland_sender.as_ref() {
-                    println!("Sending exec request! {}, {}", &app_id, &exec);
                     let _ = tx.send(WaylandRequest::TokenRequest {
                         app_id,
                         exec,
@@ -700,7 +693,6 @@ impl CosmicCompBackend {
 
     pub fn active_window(&self, app_tray: &AppTray) -> Option<WindowHandle> {
         if self.active_workspaces.is_empty() {
-            println!("Active workspaces is empty. Exiting");
             return None;
         }
         let mut focused_toplevels: Vec<ZcosmicToplevelHandleV1> = Vec::new();
@@ -709,15 +701,12 @@ impl CosmicCompBackend {
             for (handle, info) in &app_group.toplevels {
                 if let (WindowHandle::Cosmic(t_handle), WindowInfo::Cosmic(t_info)) = (handle, info)
                 {
-                    println!("{:?}", t_info.state);
-                    println!("{:?}", t_info.output);
                     if t_info.state.contains(&cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::State::Activated)
                         && active_workspaces
                             .iter()
                             .any(|workspace| t_info.workspace.contains(workspace))
                         && t_info.output.iter().any(|x| {
                             self.output_list.get(x).is_some_and(|val| {
-                                println!("{:?}",val.name.as_ref());
                                 true // TODO: Output stuff
                                 // val.name.as_ref().is_some_and(|n| *n == self.current_output)
                             })
