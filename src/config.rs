@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, Clone)]
 pub struct PanelConfig {
     pub favorites: Vec<String>,

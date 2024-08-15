@@ -1,4 +1,3 @@
-
 use app_tray::{AppTray, ApplicationGroup};
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{CompositorBackend, WaylandIncoming, WaylandOutgoing, WindowHandle};

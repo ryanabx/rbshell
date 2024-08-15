@@ -618,7 +618,7 @@ impl CosmicCompBackend {
     ) -> Option<iced::Command<crate::Message>> {
         match outgoing {
             WaylandOutgoing::Exec(app_id, exec) => {
-                println!("{:?}",_app_tray.active_toplevels.keys());
+                println!("{:?}", _app_tray.active_toplevels.keys());
                 if let Some(tx) = self.wayland_sender.as_ref() {
                     println!("Sending exec request! {}, {}", &app_id, &exec);
                     let _ = tx.send(WaylandRequest::TokenRequest {
