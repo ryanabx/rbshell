@@ -148,7 +148,7 @@ fn tray_button_style<'a>(
                 g: 1.0,
                 b: 1.0,
                 a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                    0.2
+                    0.11
                 } else {
                     0.0
                 },
@@ -172,9 +172,9 @@ fn tray_button_style<'a>(
                     g: 1.0,
                     b: 1.0,
                     a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.3
+                        0.21
                     } else {
-                        0.2
+                        0.11
                     },
                 },
                 Color {
@@ -195,9 +195,9 @@ fn tray_button_style<'a>(
                     g: 1.0,
                     b: 1.0,
                     a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.2
+                        0.11
                     } else {
-                        0.1
+                        0.06
                     },
                 },
                 Color {
