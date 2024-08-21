@@ -1,31 +1,150 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use cctk::wayland_client::protocol::wl_seat::WlSeat;
+use compositor::WaylandIncoming;
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
+    event::{self, listen_with},
     widget::{button, column, row, Container, Rule},
-    Background, Border, Color, Length, Radius, Theme,
+    Background, Border, Color, Element, Length, Radius, Theme,
 };
 
 use crate::{
-    compositor::{WaylandOutgoing, WindowHandle, WindowInfo},
+    app_tray::compositor::{CompositorBackend, WaylandOutgoing, WindowHandle, WindowInfo},
     Message,
 };
 
+mod compositor;
 pub mod desktop_entry;
 
 #[derive(Clone, Debug)]
 pub struct AppTray<'a> {
     pub de_cache: DesktopEntryCache<'a>,
     pub active_toplevels: HashMap<String, ApplicationGroup>,
+    backend: CompositorBackend,
+    config: AppTrayConfig,
 }
 
-impl<'a> Default for AppTray<'a> {
+#[derive(Clone, Debug)]
+pub struct AppTrayConfig {
+    pub favorites: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+pub enum AppTrayMessage {
+    WaylandIn(WaylandIncoming),
+    WaylandOut(WaylandOutgoing),
+    NewSeat(WlSeat),
+    RemovedSeat(WlSeat),
+}
+
+#[derive(Clone, Debug)]
+pub enum AppTrayRequest {
+    Window(WindowOperationMessage),
+}
+
+#[derive(Clone, Debug)]
+pub enum WindowOperationMessage {
+    Activate(WindowHandle),
+    Minimize(WindowHandle),
+    Launch(String),
+}
+
+impl<'a> Default for AppTrayConfig {
     fn default() -> Self {
+        Self {
+            favorites: vec![
+                "com.system76.CosmicTerm".to_string(),
+                "org.mozilla.firefox".to_string(),
+                "org.kde.discover".to_string(),
+            ],
+        }
+    }
+}
+
+impl<'a> AppTray<'a> {
+    pub fn new(config: AppTrayConfig) -> Self {
         Self {
             de_cache: DesktopEntryCache::new(),
             active_toplevels: HashMap::new(),
+            backend: CompositorBackend::new(),
+            config,
         }
+    }
+
+    pub fn handle_message(
+        &mut self,
+        app_tray_message: AppTrayMessage,
+    ) -> iced::Command<AppTrayMessage> {
+        match app_tray_message {
+            AppTrayMessage::WaylandIn(evt) => self
+                .backend
+                .handle_message(&mut self.active_toplevels, evt)
+                .unwrap_or(iced::Command::none()),
+            AppTrayMessage::WaylandOut(evt) => self
+                .backend
+                .handle_outgoing_message(&mut self.active_toplevels, evt)
+                .unwrap_or(iced::Command::none()),
+            AppTrayMessage::NewSeat(_) => {
+                println!("New seat!");
+                iced::Command::none()
+            }
+            AppTrayMessage::RemovedSeat(_) => {
+                println!("Removed seat!");
+                iced::Command::none()
+            }
+        }
+    }
+
+    pub fn view(&self) -> iced::Element<AppTrayMessage> {
+        // Get app tray apps
+        let app_tray_apps = self
+            .config
+            .favorites
+            .iter()
+            .map(|x| {
+                let app_id = x.clone();
+                (
+                    app_id,
+                    self.active_toplevels
+                        .get(x)
+                        .cloned()
+                        .unwrap_or(ApplicationGroup::default()),
+                )
+            })
+            .chain(self.active_toplevels.iter().filter_map(|(app_id, info)| {
+                if self.config.favorites.contains(app_id) {
+                    None
+                } else {
+                    Some((app_id.clone(), info.clone()))
+                }
+            }))
+            .map(|(app_id, group)| {
+                let entry = &self.de_cache.0.get(&app_id);
+                let active_window = self.backend.active_window(&self.active_toplevels);
+
+                get_tray_widget(&app_id, *entry, group, active_window.map(|f| f.clone()))
+            })
+            .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(6)));
+        iced::widget::row(app_tray_apps).into()
+    }
+
+    pub fn subscription(&self) -> iced::Subscription<AppTrayMessage> {
+        iced::Subscription::batch(vec![
+            self.backend
+                .wayland_subscription()
+                .map(AppTrayMessage::WaylandIn),
+            listen_with(|e, _, _| match e {
+                iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
+                    event::wayland::Event::Seat(e, seat),
+                )) => match e {
+                    event::wayland::SeatEvent::Enter => Some(AppTrayMessage::NewSeat(seat)),
+                    event::wayland::SeatEvent::Leave => Some(AppTrayMessage::RemovedSeat(seat)),
+                },
+                _ => None,
+            }),
+        ])
     }
 }
 
@@ -34,18 +153,12 @@ pub struct ApplicationGroup {
     pub toplevels: HashMap<WindowHandle, WindowInfo>,
 }
 
-impl<'a> AppTray<'a> {
-    pub fn get_desktop_entry(&mut self, app_id: &str) -> Option<DesktopEntry<'a>> {
-        self.de_cache.0.get(app_id).cloned()
-    }
-}
-
 pub fn get_tray_widget<'a>(
     app_id: &str,
     desktop_entry: Option<&DesktopEntry<'a>>,
     app_info: ApplicationGroup,
     active_window: Option<WindowHandle>,
-) -> iced::widget::Button<'a, crate::Message> {
+) -> iced::widget::Button<'a, AppTrayMessage> {
     let icon_path = desktop_entry
         .and_then(|entry| entry.icon())
         .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
@@ -79,10 +192,10 @@ pub fn get_tray_widget<'a>(
     .padding(4)
     .on_press_maybe(if app_info.toplevels.is_empty() {
         desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
-            Message::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
+            AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
         })
     } else if app_info.toplevels.len() == 1 {
-        Some(Message::WaylandOut(WaylandOutgoing::Toggle(
+        Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
             app_info.toplevels.keys().next().unwrap().clone(),
         )))
     } else {
@@ -104,7 +217,7 @@ pub fn get_tray_widget<'a>(
 fn get_horizontal_rule<'a>(
     app_info: &ApplicationGroup,
     active_window: &Option<&WindowHandle>,
-) -> Container<'a, Message> {
+) -> Container<'a, AppTrayMessage> {
     if app_info.toplevels.is_empty() {
         iced::widget::container(iced::widget::Space::new(
             Length::Fixed(6.0),

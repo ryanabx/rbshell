@@ -1,10 +1,12 @@
-use std::env;
+use std::{collections::HashMap, env};
 
 use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
 
 use crate::app_tray::AppTray;
+
+use super::{AppTrayMessage, ApplicationGroup};
 
 pub mod cosmic_comp;
 pub mod wlr;
@@ -39,12 +41,12 @@ impl CompositorBackend {
 
     pub fn handle_message(
         &mut self,
-        app_tray: &mut AppTray,
+        active_toplevels: &mut HashMap<String, ApplicationGroup>,
         incoming: WaylandIncoming,
-    ) -> Option<iced::Command<crate::Message>> {
+    ) -> Option<iced::Command<AppTrayMessage>> {
         match (self, incoming) {
             (Self::Cosmic(backend), WaylandIncoming::Cosmic(evt)) => {
-                backend.handle_incoming(app_tray, evt)
+                backend.handle_incoming(active_toplevels, evt)
             }
             (Self::NotSupported, _) => todo!(),
             (_, WaylandIncoming::NotSupported) => todo!(),
@@ -53,18 +55,21 @@ impl CompositorBackend {
 
     pub fn handle_outgoing_message(
         &mut self,
-        app_tray: &mut AppTray,
+        active_toplevels: &mut HashMap<String, ApplicationGroup>,
         outgoing: WaylandOutgoing,
-    ) -> Option<iced::Command<crate::Message>> {
+    ) -> Option<iced::Command<AppTrayMessage>> {
         match self {
-            Self::Cosmic(backend) => backend.handle_outgoing(app_tray, outgoing),
+            Self::Cosmic(backend) => backend.handle_outgoing(active_toplevels, outgoing),
             _ => todo!(),
         }
     }
 
-    pub fn active_window<'a>(&self, app_tray: &AppTray<'a>) -> Option<WindowHandle> {
+    pub fn active_window<'a>(
+        &self,
+        active_toplevels: &HashMap<String, ApplicationGroup>,
+    ) -> Option<WindowHandle> {
         match self {
-            Self::Cosmic(backend) => backend.active_window(app_tray),
+            Self::Cosmic(backend) => backend.active_window(active_toplevels),
             _ => todo!(),
         }
     }
