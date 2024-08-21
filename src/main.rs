@@ -12,6 +12,7 @@ use iced::{
 };
 
 mod app_tray;
+mod settings_tray;
 mod compositor;
 mod config;
 
