@@ -5,7 +5,7 @@ use iced::{
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
-    config::{AppTrayConfig, PanelConfig},
+    config::PanelConfig,
     settings_tray::{SettingsTray, SettingsTrayMessage},
 };
 

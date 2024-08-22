@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 
 use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
