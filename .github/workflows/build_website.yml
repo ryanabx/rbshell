@@ -1,0 +1,30 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main  # Run the action on pushes to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Cargo
+      run: sudo apt-get install cargo
+
+    - name: Install djot-ssg
+      run: cargo install djot-ssg
+
+    - name: Generate static site
+      run: ~/.cargo/bin/djot-ssg --clean ./docs -o ./output
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./output

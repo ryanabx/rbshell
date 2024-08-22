@@ -1,0 +1,15 @@
+[Back to main page](index.dj)
+
+# Config Options
+
+The default config looks like this:
+
+```json
+{
+    "app_tray": {
+        "favorites": [
+            "org.mozilla.firefox"
+        ]
+    }
+}
+```
