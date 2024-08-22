@@ -7,7 +7,7 @@ use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
     event::{self, listen_with},
     widget::{button, column, Container},
-    Background, Border, Color, Element, Length, Radius, Theme,
+    Background, Border, Element, Length, Radius, Theme,
 };
 
 use crate::{

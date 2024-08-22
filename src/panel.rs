@@ -1,6 +1,6 @@
 use iced::{
     widget::{column, row},
-    Application, Background, Color, Command, Padding, Radius, Subscription, Theme,
+    Application, Command, Padding, Radius, Subscription, Theme,
 };
 
 use crate::{
@@ -84,7 +84,7 @@ impl<'a> Application for Panel<'a> {
         });
         iced::widget::container(column![
             iced::widget::horizontal_rule(1).style(|theme: &Theme| iced::widget::rule::Style {
-                color: theme.palette().primary.inverse(),
+                color: theme.palette().primary,
                 width: 1,
                 radius: Radius::from(0),
                 fill_mode: iced::widget::rule::FillMode::Full

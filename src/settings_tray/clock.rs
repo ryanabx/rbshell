@@ -6,8 +6,7 @@ use std::{
 use chrono::{Local, Timelike, Utc};
 use iced::{
     futures::SinkExt,
-    widget::{column, text::Style},
-    Color, Command, Length,
+    widget::column, Command, Length,
 };
 
 #[derive(Clone, Debug)]
