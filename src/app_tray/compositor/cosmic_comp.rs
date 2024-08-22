@@ -170,10 +170,10 @@ impl ActivationHandler for WaylandData {
 
     fn new_token(&mut self, token: String, data: &Self::RequestData) {
         let _ = self.tx.unbounded_send(CosmicIncoming::ActivationToken {
-            token: Some(token),
-            app_id: data.app_id().map(|x| x.to_owned()),
-            exec: data.exec.clone(),
-            gpu_idx: data.gpu_idx,
+            _token: Some(token),
+            _app_id: data.app_id().map(|x| x.to_owned()),
+            _exec: data.exec.clone(),
+            _gpu_idx: data.gpu_idx,
         });
     }
 }
@@ -359,10 +359,10 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
                         );
                     } else {
                         let _ = state.tx.unbounded_send(CosmicIncoming::ActivationToken {
-                            token: None,
-                            app_id: Some(app_id),
-                            exec,
-                            gpu_idx,
+                            _token: None,
+                            _app_id: Some(app_id),
+                            _exec: exec,
+                            _gpu_idx: gpu_idx,
                         });
                     }
                 }
@@ -408,10 +408,10 @@ pub enum CosmicIncoming {
     Workspace(Vec<ZcosmicWorkspaceHandleV1>),
     Output(OutputUpdate),
     ActivationToken {
-        token: Option<String>,
-        app_id: Option<String>,
-        exec: String,
-        gpu_idx: Option<usize>,
+        _token: Option<String>,
+        _app_id: Option<String>,
+        _exec: String,
+        _gpu_idx: Option<usize>,
     },
 }
 
@@ -443,6 +443,7 @@ pub enum WaylandRequest {
 pub enum ToplevelRequest {
     Activate(ZcosmicToplevelHandleV1),
     Minimize(ZcosmicToplevelHandleV1),
+    #[allow(unused)]
     Quit(ZcosmicToplevelHandleV1),
 }
 

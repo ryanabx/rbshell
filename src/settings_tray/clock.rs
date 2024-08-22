@@ -60,12 +60,10 @@ impl Clock {
                     let now = Local::now();
                     let formatted_time = now.format("%I:%M %p").to_string();
                     let formatted_date = now.format("%Y-%m-%d").to_string();
-                    println!("Sending {} to main thread", formatted_time);
                     let _ = output
                         .send(ClockMessage::UpdateClock(formatted_time, formatted_date))
                         .await
                         .unwrap();
-                    println!("Through sending thing");
                     // Calculate the duration until the next minute
                     let next_minute = now.with_second(0).unwrap().with_nanosecond(0).unwrap()
                         + chrono::Duration::minutes(1);

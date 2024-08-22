@@ -78,6 +78,7 @@ pub enum WaylandIncoming {
 pub enum WaylandOutgoing {
     Exec(String, String),
     Toggle(WindowHandle),
+    #[allow(unused)]
     Activate(WindowHandle),
 }
 
