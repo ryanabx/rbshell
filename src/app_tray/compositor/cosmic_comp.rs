@@ -44,9 +44,8 @@ use iced::{
 use once_cell::sync::Lazy;
 
 use crate::app_tray::{
-    self,
     compositor::{WindowHandle, WindowInfo},
-    AppTray, AppTrayMessage, ApplicationGroup,
+    AppTrayMessage, ApplicationGroup,
 };
 
 use super::WaylandOutgoing;
@@ -506,7 +505,7 @@ pub struct CosmicCompBackend {
     wayland_sender: Option<Sender<WaylandRequest>>,
     active_workspaces: Vec<ZcosmicWorkspaceHandleV1>,
     output_list: HashMap<WlOutput, OutputInfo>,
-    current_output: String,
+    _current_output: String, // TODO: Get current output
 }
 
 impl CosmicCompBackend {
@@ -515,7 +514,7 @@ impl CosmicCompBackend {
             wayland_sender: None,
             active_workspaces: Vec::new(),
             output_list: HashMap::new(),
-            current_output: "".to_string(),
+            _current_output: "".to_string(),
         }
     }
 
@@ -706,7 +705,7 @@ impl CosmicCompBackend {
                             .iter()
                             .any(|workspace| t_info.workspace.contains(workspace))
                         && t_info.output.iter().any(|x| {
-                            self.output_list.get(x).is_some_and(|val| {
+                            self.output_list.get(x).is_some_and(|_val| {
                                 true // TODO: Output stuff
                                 // val.name.as_ref().is_some_and(|n| *n == self.current_output)
                             })

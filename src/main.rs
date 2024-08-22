@@ -1,13 +1,11 @@
-use app_tray::{AppTray, AppTrayConfig, AppTrayMessage, ApplicationGroup};
-use cctk::wayland_client::protocol::wl_seat::WlSeat;
+use app_tray::{AppTray, AppTrayConfig, AppTrayMessage};
 use config::PanelConfig;
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
-    event::{self, listen_with},
     widget::{column, container::Style},
-    Application, Background, Color, Command, Element, Radius, Settings, Subscription, Theme,
+    Application, Background, Color, Command, Radius, Settings, Theme,
 };
 
 mod app_tray;
@@ -30,14 +28,14 @@ fn main() -> Result<(), iced::Error> {
 
 #[derive(Clone, Debug)]
 struct Panel<'a> {
-    panel_config: PanelConfig,
+    _panel_config: PanelConfig,
     app_tray: AppTray<'a>,
 }
 
 impl<'a> Default for Panel<'a> {
     fn default() -> Self {
         Self {
-            panel_config: PanelConfig::default(),
+            _panel_config: PanelConfig::default(),
             app_tray: AppTray::new(AppTrayConfig::default()),
         }
     }

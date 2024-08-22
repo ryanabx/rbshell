@@ -6,14 +6,11 @@ use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
     event::{self, listen_with},
-    widget::{button, column, row, Container, Rule},
+    widget::{button, column, Container},
     Background, Border, Color, Element, Length, Radius, Theme,
 };
 
-use crate::{
-    app_tray::compositor::{CompositorBackend, WaylandOutgoing, WindowHandle, WindowInfo},
-    Message,
-};
+use crate::app_tray::compositor::{CompositorBackend, WaylandOutgoing, WindowHandle, WindowInfo};
 
 mod compositor;
 pub mod desktop_entry;
@@ -37,18 +34,6 @@ pub enum AppTrayMessage {
     WaylandOut(WaylandOutgoing),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
-}
-
-#[derive(Clone, Debug)]
-pub enum AppTrayRequest {
-    Window(WindowOperationMessage),
-}
-
-#[derive(Clone, Debug)]
-pub enum WindowOperationMessage {
-    Activate(WindowHandle),
-    Minimize(WindowHandle),
-    Launch(String),
 }
 
 impl<'a> Default for AppTrayConfig {
