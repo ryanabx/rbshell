@@ -51,11 +51,7 @@ pub struct AppTrayConfig {
 impl<'a> Default for AppTrayConfig {
     fn default() -> Self {
         Self {
-            favorites: vec![
-                "com.system76.CosmicTerm".to_string(),
-                "org.mozilla.firefox".to_string(),
-                "org.kde.discover".to_string(),
-            ],
+            favorites: vec!["org.mozilla.firefox".to_string()],
         }
     }
 }

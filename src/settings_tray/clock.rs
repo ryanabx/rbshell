@@ -4,10 +4,7 @@ use std::{
 };
 
 use chrono::{Local, Timelike, Utc};
-use iced::{
-    futures::SinkExt,
-    widget::column, Command, Length,
-};
+use iced::{futures::SinkExt, widget::column, Command, Length};
 
 #[derive(Clone, Debug)]
 pub enum ClockMessage {
