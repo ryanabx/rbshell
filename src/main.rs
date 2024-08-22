@@ -1,4 +1,7 @@
-use std::{env, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use clap::Parser;
 use config::{ConfigError, PanelConfig};
@@ -27,7 +30,10 @@ pub struct CliArgs {
     /// Specify the configuration directory for the config file
     /// Defaults to ~/.config/ryanabx-shell/config.json
     #[arg(long)]
-    config: Option<String>,
+    config: Option<PathBuf>,
+    /// The scale to bring all the components up by
+    #[arg(long)]
+    scale: Option<f32>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -50,10 +56,9 @@ fn main() -> Result<(), PanelError> {
     };
     let mut panel_settings = Settings::with_flags(PanelFlags {
         compositor: args.compositor.unwrap_or(compositor_default()),
-        config: PanelConfig::from_file_or_default(Path::new(&args.config.unwrap_or(format!(
-            "{}/.config/ryanabx-shell/config.json",
-            env::var("HOME").unwrap()
-        ))))?,
+        config: PanelConfig::from_file_or_default(&args.config.unwrap_or(
+            Path::new(&env::var("HOME").unwrap()).join(".config/ryanabx-shell/config.json"),
+        )),
     });
     panel_settings.initial_surface = InitialSurface::LayerSurface(layer_surface_settings);
     panel::Panel::run(panel_settings).map_err(PanelError::Iced)

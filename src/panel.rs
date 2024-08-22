@@ -1,5 +1,6 @@
 use iced::{
     widget::{column, row},
+    window::Id,
     Application, Command, Padding, Radius, Subscription, Theme,
 };
 
@@ -45,6 +46,10 @@ impl<'a> Application for Panel<'a> {
 
     fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         (Panel::new(flags), Command::<self::Message>::none())
+    }
+
+    fn scale_factor(&self, _id: Id) -> f64 {
+        2.0.into()
     }
 
     fn theme(&self, _id: iced::window::Id) -> Self::Theme {

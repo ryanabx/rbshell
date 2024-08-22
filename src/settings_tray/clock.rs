@@ -39,10 +39,10 @@ impl Clock {
         iced::widget::container(column![
             iced::widget::text!("{}", self.time)
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .size(14),
+                .size(14.0),
             iced::widget::text!("{}", self.date)
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .size(10)
+                .size(10.0)
         ])
         .center_y(Length::Fill)
         .into()

@@ -97,7 +97,14 @@ impl<'a> AppTray<'a> {
 
                 get_tray_widget(&app_id, *entry, group, active_window.map(|f| f.clone()))
             })
-            .map(|x| Element::from(iced::widget::container(x).width(48).height(48).padding(6)));
+            .map(|x| {
+                Element::from(
+                    iced::widget::container(x)
+                        .width(48.0)
+                        .height(48.0)
+                        .padding(6.0),
+                )
+            });
         iced::widget::row(app_tray_apps).into()
     }
 
@@ -197,9 +204,9 @@ fn get_horizontal_rule<'a>(
     } else {
         iced::widget::container(
             iced::widget::horizontal_rule(1)
-                .style(|theme: &Theme| iced::widget::rule::Style {
+                .style(move |theme: &Theme| iced::widget::rule::Style {
                     color: theme.palette().primary,
-                    width: 2,
+                    width: (2.0) as u16,
                     radius: 4.into(),
                     fill_mode: iced::widget::rule::FillMode::Full,
                 })

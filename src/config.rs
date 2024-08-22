@@ -28,12 +28,19 @@ impl<'a> Default for PanelConfig {
 }
 
 impl PanelConfig {
-    pub fn from_file_or_default(path: &Path) -> Result<Self, ConfigError> {
-        let mut file = File::open(path)?;
-        let mut data = String::new();
-        file.read_to_string(&mut data)?;
-        let config: PanelConfig = serde_json::from_str(&data).unwrap_or_default();
-        Ok(config)
+    pub fn from_file_or_default(path: &Path) -> Self {
+        File::open(path)
+            .map_err(ConfigError::IO)
+            .and_then(|mut res| {
+                let mut data = String::new();
+                res.read_to_string(&mut data)
+                    .map(|_| data)
+                    .map_err(ConfigError::IO)
+            })
+            .and_then(|val| -> Result<Self, ConfigError> {
+                serde_json::from_str(&val).map_err(ConfigError::Serde)
+            })
+            .unwrap_or_default()
     }
 
     pub fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
