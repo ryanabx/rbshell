@@ -4,9 +4,10 @@ use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
-    widget::{column, container::Style},
-    Application, Background, Color, Command, Radius, Settings, Theme,
+    widget::{column, container::Style, row},
+    Application, Background, Color, Command, Radius, Settings, Subscription, Theme,
 };
+use settings_tray::{SettingsTray, SettingsTrayMessage};
 
 mod app_tray;
 mod config;
@@ -30,6 +31,7 @@ fn main() -> Result<(), iced::Error> {
 struct Panel<'a> {
     _panel_config: PanelConfig,
     app_tray: AppTray<'a>,
+    settings_tray: SettingsTray,
 }
 
 impl<'a> Default for Panel<'a> {
@@ -37,6 +39,7 @@ impl<'a> Default for Panel<'a> {
         Self {
             _panel_config: PanelConfig::default(),
             app_tray: AppTray::new(AppTrayConfig::default()),
+            settings_tray: SettingsTray::new(),
         }
     }
 }
@@ -45,6 +48,7 @@ impl<'a> Default for Panel<'a> {
 pub enum Message {
     Panic,
     AppTray(AppTrayMessage),
+    SettingsTray(SettingsTrayMessage),
 }
 
 impl<'a> Application for Panel<'a> {
@@ -63,6 +67,7 @@ impl<'a> Application for Panel<'a> {
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+        println!("Received message: {:?}", message);
         match message {
             Message::Panic => {
                 panic!("Panic button pressed hehe");
@@ -71,6 +76,10 @@ impl<'a> Application for Panel<'a> {
                 .app_tray
                 .handle_message(app_tray_msg)
                 .map(Message::AppTray),
+            Message::SettingsTray(settings_tray_msg) => self
+                .settings_tray
+                .handle_message(settings_tray_msg)
+                .map(Message::SettingsTray),
         }
     }
 
@@ -78,7 +87,10 @@ impl<'a> Application for Panel<'a> {
         &self,
         _id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
-        let panel_items = self.app_tray.view().map(Message::AppTray);
+        let panel_items = row![
+            self.app_tray.view().map(Message::AppTray),
+            self.settings_tray.view().map(Message::SettingsTray)
+        ];
         iced::widget::container(column![
             iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
                 color: Color::WHITE,
@@ -94,7 +106,10 @@ impl<'a> Application for Panel<'a> {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        self.app_tray.subscription().map(Message::AppTray)
+        Subscription::batch(vec![
+            self.settings_tray.subscription().map(Message::SettingsTray),
+            self.app_tray.subscription().map(Message::AppTray),
+        ])
     }
 }
 
