@@ -43,12 +43,10 @@ impl Clock {
         iced::widget::container(column![
             iced::widget::text!("{}", self.time)
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .size(14)
-                .style(white_text),
+                .size(14),
             iced::widget::text!("{}", self.date)
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
                 .size(10)
-                .style(white_text)
         ])
         .center_y(Length::Fill)
         .into()
@@ -89,11 +87,5 @@ impl Clock {
                 }
             },
         )
-    }
-}
-
-fn white_text(_theme: &iced::Theme) -> iced::widget::text::Style {
-    Style {
-        color: Some(Color::WHITE),
     }
 }

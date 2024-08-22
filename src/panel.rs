@@ -32,7 +32,6 @@ impl<'a> Panel<'a> {
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Panic,
     AppTray(AppTrayMessage),
     SettingsTray(SettingsTrayMessage),
 }
@@ -48,15 +47,16 @@ impl<'a> Application for Panel<'a> {
         (Panel::new(flags), Command::<self::Message>::none())
     }
 
+    fn theme(&self, _id: iced::window::Id) -> Self::Theme {
+        Theme::Dark
+    }
+
     fn title(&self, _id: iced::window::Id) -> String {
         "Window".into()
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
         match message {
-            Message::Panic => {
-                panic!("Panic button pressed hehe");
-            }
             Message::AppTray(app_tray_msg) => self
                 .app_tray
                 .handle_message(app_tray_msg)
@@ -83,20 +83,14 @@ impl<'a> Application for Panel<'a> {
             bottom: 0.0,
         });
         iced::widget::container(column![
-            iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
-                color: Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: 0.3,
-                },
+            iced::widget::horizontal_rule(1).style(|theme: &Theme| iced::widget::rule::Style {
+                color: theme.palette().primary.inverse(),
                 width: 1,
                 radius: Radius::from(0),
                 fill_mode: iced::widget::rule::FillMode::Full
             }),
             panel_items
         ])
-        .style(|theme| self.panel_style(theme))
         .fill()
         .into()
     }
@@ -106,19 +100,5 @@ impl<'a> Application for Panel<'a> {
             self.settings_tray.subscription().map(Message::SettingsTray),
             self.app_tray.subscription().map(Message::AppTray),
         ])
-    }
-}
-
-impl<'a> Panel<'a> {
-    fn panel_style(&self, _theme: &Theme) -> iced::widget::container::Style {
-        iced::widget::container::Style {
-            background: Some(Background::Color(Color {
-                r: 30.0 / 256.0,
-                g: 30.0 / 256.0,
-                b: 30.0 / 256.0,
-                a: 1.0,
-            })),
-            ..Default::default()
-        }
     }
 }

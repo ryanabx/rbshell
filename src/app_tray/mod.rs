@@ -197,8 +197,8 @@ fn get_horizontal_rule<'a>(
     } else {
         iced::widget::container(
             iced::widget::horizontal_rule(1)
-                .style(|_| iced::widget::rule::Style {
-                    color: Color::WHITE,
+                .style(|theme: &Theme| iced::widget::rule::Style {
+                    color: theme.palette().primary,
                     width: 2,
                     radius: 4.into(),
                     fill_mode: iced::widget::rule::FillMode::Full,
@@ -220,81 +220,30 @@ fn get_default_icon() -> Option<PathBuf> {
 }
 
 fn tray_button_style<'a>(
-    _theme: &Theme,
+    theme: &Theme,
     status: button::Status,
     app_info: &ApplicationGroup,
     active_window: &Option<&WindowHandle>,
 ) -> button::Style {
-    let (border_color, background_color) = if app_info.toplevels.is_empty() {
-        (
-            Color {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-                a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                    0.11
-                } else {
-                    0.0
-                },
-            },
-            Color {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-                a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                    0.1
-                } else {
-                    0.0
-                },
-            },
-        )
-    } else {
-        if active_window.is_some_and(|x| app_info.toplevels.contains_key(x)) {
-            (
-                Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.21
-                    } else {
-                        0.11
-                    },
-                },
-                Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.2
-                    } else {
-                        0.1
-                    },
-                },
-            )
+    let mut border_color = theme.palette().primary;
+    let mut background_color = theme.palette().primary;
+    (border_color.a, background_color.a) = if app_info.toplevels.is_empty() {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.11, 0.1)
         } else {
-            (
-                Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.11
-                    } else {
-                        0.06
-                    },
-                },
-                Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                        0.1
-                    } else {
-                        0.05
-                    },
-                },
-            )
+            (0.0, 0.0)
+        }
+    } else if active_window.is_some_and(|x| app_info.toplevels.contains_key(x)) {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.21, 0.2)
+        } else {
+            (0.11, 0.1)
+        }
+    } else {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.11, 0.1)
+        } else {
+            (0.06, 0.05)
         }
     };
 
