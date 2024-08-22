@@ -1,5 +1,5 @@
 use clock::{Clock, ClockMessage};
-use iced::widget::row;
+use iced::{widget::row, Length};
 
 mod clock;
 
@@ -33,7 +33,11 @@ impl SettingsTray {
     }
 
     pub fn view(&self) -> iced::Element<SettingsTrayMessage> {
-        iced::widget::container(row![self.clock.view().map(SettingsTrayMessage::Clock)]).into()
+        iced::widget::container(row![self.clock.view().map(SettingsTrayMessage::Clock)])
+            .center_y(Length::Fill)
+            .width(Length::Fill)
+            .align_x(iced::alignment::Horizontal::Right)
+            .into()
     }
 
     pub fn subscription(&self) -> iced::Subscription<SettingsTrayMessage> {

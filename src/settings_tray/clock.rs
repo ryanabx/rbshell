@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use chrono::{Timelike, Utc};
+use chrono::{Local, Timelike, Utc};
 use iced::{
     futures::SinkExt,
     widget::{column, text::Style},
@@ -56,8 +56,8 @@ impl Clock {
             0,
             |mut output| async move {
                 loop {
-                    let now = Utc::now();
-                    let formatted_time = now.format("%H:%M:%S").to_string();
+                    let now = Local::now();
+                    let formatted_time = now.format("%I:%M %p").to_string();
                     let formatted_date = now.format("%Y-%m-%d").to_string();
                     println!("Sending {} to main thread", formatted_time);
                     let _ = output

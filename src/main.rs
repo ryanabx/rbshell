@@ -1,11 +1,11 @@
-use app_tray::{AppTray, AppTrayConfig, AppTrayMessage};
-use config::PanelConfig;
+use app_tray::{AppTray, AppTrayMessage};
+use config::{AppTrayConfig, PanelConfig};
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
     widget::{column, container::Style, row},
-    Application, Background, Color, Command, Radius, Settings, Subscription, Theme,
+    Application, Background, Color, Command, Padding, Radius, Settings, Subscription, Theme,
 };
 use settings_tray::{SettingsTray, SettingsTrayMessage};
 
@@ -67,7 +67,6 @@ impl<'a> Application for Panel<'a> {
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
-        println!("Received message: {:?}", message);
         match message {
             Message::Panic => {
                 panic!("Panic button pressed hehe");
@@ -90,10 +89,21 @@ impl<'a> Application for Panel<'a> {
         let panel_items = row![
             self.app_tray.view().map(Message::AppTray),
             self.settings_tray.view().map(Message::SettingsTray)
-        ];
+        ]
+        .padding(Padding {
+            right: 16.0,
+            left: 16.0,
+            top: 0.0,
+            bottom: 0.0,
+        });
         iced::widget::container(column![
             iced::widget::horizontal_rule(1).style(|_| iced::widget::rule::Style {
-                color: Color::WHITE,
+                color: Color {
+                    r: 1.0,
+                    g: 1.0,
+                    b: 1.0,
+                    a: 0.3,
+                },
                 width: 1,
                 radius: Radius::from(0),
                 fill_mode: iced::widget::rule::FillMode::Full

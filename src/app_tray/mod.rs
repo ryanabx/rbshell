@@ -10,7 +10,10 @@ use iced::{
     Background, Border, Color, Element, Length, Radius, Theme,
 };
 
-use crate::app_tray::compositor::{CompositorBackend, WaylandOutgoing, WindowHandle, WindowInfo};
+use crate::{
+    app_tray::compositor::{CompositorBackend, WaylandOutgoing, WindowHandle, WindowInfo},
+    config::AppTrayConfig,
+};
 
 mod compositor;
 pub mod desktop_entry;
@@ -24,28 +27,11 @@ pub struct AppTray<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct AppTrayConfig {
-    pub favorites: Vec<String>,
-}
-
-#[derive(Clone, Debug)]
 pub enum AppTrayMessage {
     WaylandIn(WaylandIncoming),
     WaylandOut(WaylandOutgoing),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
-}
-
-impl<'a> Default for AppTrayConfig {
-    fn default() -> Self {
-        Self {
-            favorites: vec![
-                "com.system76.CosmicTerm".to_string(),
-                "org.mozilla.firefox".to_string(),
-                "org.kde.discover".to_string(),
-            ],
-        }
-    }
 }
 
 impl<'a> AppTray<'a> {
