@@ -8,7 +8,7 @@ use iced::{
     futures::SinkExt,
     widget::{
         column,
-        text::{Style},
+        text::Style,
     },
     Color, Command,
 };
@@ -21,14 +21,14 @@ pub enum ClockMessage {
 
 #[derive(Clone, Debug)]
 pub struct Clock {
-    date: String,
+    _date: String,
     time: String,
 }
 
 impl Clock {
     pub fn new() -> Self {
         Self {
-            date: "".to_string(),
+            _date: "".to_string(),
             time: "".to_string(),
         }
     }
@@ -46,7 +46,7 @@ impl Clock {
 
     pub fn view(&self) -> iced::Element<ClockMessage> {
         iced::widget::container(column![iced::widget::text!("{}", self.time).style(
-            |theme| {
+            |_theme| {
                 Style {
                     color: Some(Color::WHITE),
                 }
