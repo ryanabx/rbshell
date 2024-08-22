@@ -5,12 +5,12 @@ use std::{
 
 use chrono::{Timelike, Utc};
 use iced::{
-    futures::{SinkExt, Stream},
+    futures::SinkExt,
     widget::{
         column,
-        text::{self, Style},
+        text::{Style},
     },
-    Color, Command, Subscription,
+    Color, Command,
 };
 
 #[derive(Clone, Debug)]

@@ -1,5 +1,5 @@
 use clock_subscription::{Clock, ClockMessage};
-use iced::widget::{row, text};
+use iced::widget::row;
 
 mod clock_subscription;
 
