@@ -6,41 +6,36 @@ use std::{
 use chrono::{Timelike, Utc};
 use iced::{
     futures::SinkExt,
-    widget::{
-        column,
-        text::Style,
-    },
+    widget::{column, text::Style},
     Color, Command,
 };
 
 #[derive(Clone, Debug)]
 pub enum ClockMessage {
-    UpdateClock(String),
-    UpdateDate(String),
+    UpdateClock(String, String),
 }
 
 #[derive(Clone, Debug)]
 pub struct Clock {
-    _date: String,
+    date: String,
     time: String,
 }
 
 impl Clock {
     pub fn new() -> Self {
         Self {
-            _date: "".to_string(),
+            date: "".to_string(),
             time: "".to_string(),
         }
     }
 
     pub fn handle_message(&mut self, clock_message: ClockMessage) -> iced::Command<ClockMessage> {
         match clock_message {
-            ClockMessage::UpdateClock(new_time) => {
-                println!("Updating time to {}", &new_time);
+            ClockMessage::UpdateClock(new_time, new_date) => {
                 self.time = new_time;
+                self.date = new_date;
                 Command::none()
             }
-            _ => todo!(),
         }
     }
 
@@ -56,17 +51,17 @@ impl Clock {
     }
 
     pub fn subscription(&self) -> iced::Subscription<ClockMessage> {
-        struct ClockWorker;
         iced::subscription::channel(
-            std::any::TypeId::of::<ClockWorker>(),
-            100,
+            std::any::TypeId::of::<ClockMessage>(),
+            0,
             |mut output| async move {
                 loop {
                     let now = Utc::now();
-                    let formatted_time = now.format("%Y-%m-%d %H:%M:%S").to_string();
+                    let formatted_time = now.format("%H:%M:%S").to_string();
+                    let formatted_date = now.format("%Y-%m-%d").to_string();
                     println!("Sending {} to main thread", formatted_time);
-                    output
-                        .send(ClockMessage::UpdateClock(formatted_time))
+                    let _ = output
+                        .send(ClockMessage::UpdateClock(formatted_time, formatted_date))
                         .await
                         .unwrap();
                     println!("Through sending thing");

@@ -1,7 +1,7 @@
-use clock_subscription::{Clock, ClockMessage};
+use clock::{Clock, ClockMessage};
 use iced::widget::row;
 
-mod clock_subscription;
+mod clock;
 
 #[derive(Clone, Debug)]
 pub struct SettingsTray {
