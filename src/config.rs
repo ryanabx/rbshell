@@ -16,19 +16,19 @@ pub enum ConfigError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PanelConfig {
-    app_tray_config: AppTrayConfig,
+    pub app_tray: AppTrayConfig,
 }
 
 impl<'a> Default for PanelConfig {
     fn default() -> Self {
         Self {
-            app_tray_config: AppTrayConfig::default(),
+            app_tray: AppTrayConfig::default(),
         }
     }
 }
 
 impl PanelConfig {
-    fn from_file_or_default(path: &Path) -> Result<Self, ConfigError> {
+    pub fn from_file_or_default(path: &Path) -> Result<Self, ConfigError> {
         let mut file = File::open(path)?;
         let mut data = String::new();
         file.read_to_string(&mut data)?;
@@ -36,7 +36,7 @@ impl PanelConfig {
         Ok(config)
     }
 
-    fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
+    pub fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
         let data = serde_json::to_string_pretty(self)?;
         std::fs::write(path, data)?;
         Ok(())

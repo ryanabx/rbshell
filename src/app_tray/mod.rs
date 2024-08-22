@@ -35,11 +35,11 @@ pub enum AppTrayMessage {
 }
 
 impl<'a> AppTray<'a> {
-    pub fn new(config: AppTrayConfig) -> Self {
+    pub fn new(config: AppTrayConfig, compositor: &str) -> Self {
         Self {
             de_cache: DesktopEntryCache::new(),
             active_toplevels: HashMap::new(),
-            backend: CompositorBackend::new(),
+            backend: CompositorBackend::new(compositor),
             config,
         }
     }

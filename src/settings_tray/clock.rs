@@ -7,7 +7,7 @@ use chrono::{Local, Timelike, Utc};
 use iced::{
     futures::SinkExt,
     widget::{column, text::Style},
-    Color, Command,
+    Color, Command, Length,
 };
 
 #[derive(Clone, Debug)]
@@ -40,13 +40,17 @@ impl Clock {
     }
 
     pub fn view(&self) -> iced::Element<ClockMessage> {
-        iced::widget::container(column![iced::widget::text!("{}", self.time).style(
-            |_theme| {
-                Style {
-                    color: Some(Color::WHITE),
-                }
-            }
-        )])
+        iced::widget::container(column![
+            iced::widget::text!("{}", self.time)
+                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .size(14)
+                .style(white_text),
+            iced::widget::text!("{}", self.date)
+                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .size(10)
+                .style(white_text)
+        ])
+        .center_y(Length::Fill)
         .into()
     }
 
@@ -85,5 +89,11 @@ impl Clock {
                 }
             },
         )
+    }
+}
+
+fn white_text(_theme: &iced::Theme) -> iced::widget::text::Style {
+    Style {
+        color: Some(Color::WHITE),
     }
 }

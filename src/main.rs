@@ -1,15 +1,15 @@
-use app_tray::{AppTray, AppTrayMessage};
+use std::{env, path::Path};
+
 use clap::Parser;
-use config::{AppTrayConfig, PanelConfig};
+use config::{ConfigError, PanelConfig};
 use env_logger::Env;
 use iced::{
     application::{
         actions::layer_surface::SctkLayerSurfaceSettings, layer_surface::Anchor, InitialSurface,
     },
-    widget::{column, container::Style, row},
-    Application, Background, Color, Command, Padding, Radius, Settings, Subscription, Theme,
+    Application, Settings,
 };
-use settings_tray::{SettingsTray, SettingsTrayMessage};
+use panel::PanelFlags;
 
 mod app_tray;
 mod config;
@@ -30,7 +30,15 @@ pub struct CliArgs {
     config: Option<String>,
 }
 
-fn main() -> Result<(), iced::Error> {
+#[derive(Debug, thiserror::Error)]
+enum PanelError {
+    #[error("Config: {0}")]
+    Config(#[from] ConfigError),
+    #[error("Iced: {0}")]
+    Iced(#[from] iced::Error),
+}
+
+fn main() -> Result<(), PanelError> {
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
     let args = CliArgs::parse();
     let layer_surface_settings = SctkLayerSurfaceSettings {
@@ -40,7 +48,23 @@ fn main() -> Result<(), iced::Error> {
         exclusive_zone: 48,
         ..Default::default()
     };
-    let mut panel_settings = Settings::with_flags(args);
+    let mut panel_settings = Settings::with_flags(PanelFlags {
+        compositor: args.compositor.unwrap_or(compositor_default()),
+        config: PanelConfig::from_file_or_default(Path::new(&args.config.unwrap_or(format!(
+            "{}/.config/ryanabx-shell/config.json",
+            env::var("HOME").unwrap()
+        ))))?,
+    });
     panel_settings.initial_surface = InitialSurface::LayerSurface(layer_surface_settings);
-    panel::Panel::run(panel_settings)
+    panel::Panel::run(panel_settings).map_err(PanelError::Iced)
+}
+
+fn compositor_default() -> String {
+    let current_compositor = env::var("XDG_CURRENT_DESKTOP");
+    match current_compositor.as_deref() {
+        Ok(val) => val.to_string(),
+        _ => panic!(
+            "Unsupported desktop. Specify a compositor with the argument `--compositor <COMPOSITOR>` for example, `--compositor COSMIC`"
+        ),
+    }
 }

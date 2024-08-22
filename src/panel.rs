@@ -7,21 +7,24 @@ use crate::{
     app_tray::{AppTray, AppTrayMessage},
     config::{AppTrayConfig, PanelConfig},
     settings_tray::{SettingsTray, SettingsTrayMessage},
-    CliArgs,
 };
 
 #[derive(Clone, Debug)]
+pub struct PanelFlags {
+    pub compositor: String,
+    pub config: PanelConfig,
+}
+
+#[derive(Clone, Debug)]
 pub struct Panel<'a> {
-    _panel_config: PanelConfig,
     app_tray: AppTray<'a>,
     settings_tray: SettingsTray,
 }
 
-impl<'a> Default for Panel<'a> {
-    fn default() -> Self {
+impl<'a> Panel<'a> {
+    pub fn new(flags: PanelFlags) -> Self {
         Self {
-            _panel_config: PanelConfig::default(),
-            app_tray: AppTray::new(AppTrayConfig::default()),
+            app_tray: AppTray::new(flags.config.app_tray, &flags.compositor),
             settings_tray: SettingsTray::new(),
         }
     }
@@ -39,10 +42,10 @@ impl<'a> Application for Panel<'a> {
     type Theme = Theme;
     type Executor = iced::executor::Default;
     type Renderer = iced::Renderer;
-    type Flags = CliArgs;
+    type Flags = PanelFlags;
 
-    fn new(_flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
-        (Panel::default(), Command::<self::Message>::none())
+    fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+        (Panel::new(flags), Command::<self::Message>::none())
     }
 
     fn title(&self, _id: iced::window::Id) -> String {
