@@ -5,14 +5,14 @@ use iced::{
 };
 
 use crate::{
-    app_tray::{AppTray, AppTrayMessage},
+    app_tray::{compositor::Compositor, AppTray, AppTrayMessage},
     config::PanelConfig,
     settings_tray::{SettingsTray, SettingsTrayMessage},
 };
 
 #[derive(Clone, Debug)]
 pub struct PanelFlags {
-    pub compositor: String,
+    pub compositor: Compositor,
     pub config: PanelConfig,
 }
 
@@ -23,10 +23,10 @@ pub struct Panel<'a> {
 }
 
 impl<'a> Panel<'a> {
-    pub fn new(flags: PanelFlags) -> (Self, Task<Message>) {
+    pub fn new(config: PanelConfig, compositor: Compositor) -> (Self, Task<Message>) {
         (
             Self {
-                app_tray: AppTray::new(flags.config.app_tray, &flags.compositor),
+                app_tray: AppTray::new(config.app_tray, compositor),
                 settings_tray: SettingsTray::new(),
             },
             Task::none(),

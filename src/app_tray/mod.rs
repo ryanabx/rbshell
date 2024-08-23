@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
-use compositor::WaylandIncoming;
+use compositor::{Compositor, WaylandIncoming};
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
@@ -16,7 +16,7 @@ use crate::{
     config::AppTrayConfig,
 };
 
-mod compositor;
+pub mod compositor;
 pub mod desktop_entry;
 
 #[derive(Clone, Debug)]
@@ -38,7 +38,7 @@ pub enum AppTrayMessage {
 }
 
 impl<'a> AppTray<'a> {
-    pub fn new(config: AppTrayConfig, compositor: &str) -> Self {
+    pub fn new(config: AppTrayConfig, compositor: Compositor) -> Self {
         Self {
             de_cache: DesktopEntryCache::new(),
             active_toplevels: HashMap::new(),
@@ -59,15 +59,15 @@ impl<'a> AppTray<'a> {
                 .handle_outgoing_message(&mut self.active_toplevels, evt)
                 .unwrap_or(Task::none()),
             AppTrayMessage::NewSeat(_) => {
-                println!("New seat!");
+                log::trace!("New seat!");
                 Task::none()
             }
             AppTrayMessage::RemovedSeat(_) => {
-                println!("Removed seat!");
+                log::trace!("Removed seat!");
                 Task::none()
             }
             AppTrayMessage::ContextMenu(app_id) => {
-                println!("App id requested: {}", &app_id);
+                log::trace!("App id requested: {}", &app_id);
                 Task::none()
             }
         }

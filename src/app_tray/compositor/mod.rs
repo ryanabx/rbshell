@@ -10,19 +10,37 @@ use super::{AppTrayMessage, ApplicationGroup};
 pub mod cosmic_comp;
 
 #[derive(Clone, Debug)]
+pub enum Compositor {
+    Cosmic,
+    None,
+}
+
+impl Compositor {
+    pub fn new(tag: &str) -> Self {
+        match tag.to_lowercase().as_str() {
+            "cosmic" | "cosmic-comp" => Self::Cosmic,
+            other => {
+                log::warn!(
+                    "Compositor or desktop {} not directly supported. Some features may not work.",
+                    other
+                );
+                Self::None
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum CompositorBackend {
     Cosmic(CosmicCompBackend),
     None,
-    #[allow(dead_code)]
-    NotSupported,
 }
 
 impl CompositorBackend {
-    pub fn new(compositor: &str) -> Self {
+    pub fn new(compositor: Compositor) -> Self {
         match compositor {
-            "COSMIC" => Self::Cosmic(CosmicCompBackend::new()),
-            "none" => Self::None,
-            desktop => panic!("Unsupported desktop {desktop}. Specify a backend with the env variable RYANABX_SHELL_DESKTOP"),
+            Compositor::Cosmic => Self::Cosmic(CosmicCompBackend::new()),
+            Compositor::None => Self::None,
         }
     }
 
@@ -30,7 +48,6 @@ impl CompositorBackend {
         match self {
             Self::Cosmic(backend) => backend.wayland_subscription().map(WaylandIncoming::Cosmic),
             Self::None => Subscription::none(),
-            Self::NotSupported => panic!("Not supported"),
         }
     }
 
@@ -44,7 +61,6 @@ impl CompositorBackend {
                 backend.handle_incoming(active_toplevels, evt)
             }
             (Self::None, _) => None,
-            (Self::NotSupported, _) | (_, WaylandIncoming::NotSupported) => panic!("Not supported"),
         }
     }
 
@@ -56,7 +72,6 @@ impl CompositorBackend {
         match self {
             Self::Cosmic(backend) => backend.handle_outgoing(active_toplevels, outgoing),
             Self::None => None,
-            Self::NotSupported => panic!("Not supported"),
         }
     }
 
@@ -67,7 +82,6 @@ impl CompositorBackend {
         match self {
             Self::Cosmic(backend) => backend.active_window(active_toplevels),
             Self::None => None,
-            Self::NotSupported => panic!("Not supported"),
         }
     }
 }
@@ -75,8 +89,6 @@ impl CompositorBackend {
 #[derive(Clone, Debug)]
 pub enum WaylandIncoming {
     Cosmic(cosmic_comp::CosmicIncoming),
-    #[allow(dead_code)]
-    NotSupported,
 }
 
 #[derive(Clone, Debug)]

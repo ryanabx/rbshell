@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use app_tray::compositor::Compositor;
 use clap::Parser;
 use config::{ConfigError, PanelConfig};
 use env_logger::Env;
@@ -15,7 +16,7 @@ use env_logger::Env;
 
 use panel::{Panel, PanelFlags};
 
-mod app_tray;
+pub mod app_tray;
 mod config;
 mod panel;
 mod settings_tray;
@@ -48,7 +49,8 @@ enum PanelError {
 fn main() -> Result<(), PanelError> {
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
     let args = CliArgs::parse();
-    let compositor = args.compositor.unwrap_or(compositor_default());
+    log::trace!("Received args: {:?}", args);
+    let compositor = Compositor::new(&args.compositor.unwrap_or(compositor_default()));
     let config = PanelConfig::from_file_or_default(
         &args
             .config
@@ -57,7 +59,7 @@ fn main() -> Result<(), PanelError> {
     iced::application(Panel::title, Panel::update, Panel::view)
         .subscription(Panel::subscription)
         .window_size((1280.0, 48.0))
-        .run_with(|| Panel::new(PanelFlags { compositor, config }))
+        .run_with(|| Panel::new(config, compositor))
         .map_err(PanelError::Iced)
 }
 

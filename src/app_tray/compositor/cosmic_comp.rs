@@ -342,10 +342,6 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
                 } => {
                     if let Some(activation_state) = state.activation_state.as_ref() {
                         let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
-                        println!(
-                            "HERE: {} {} {:?}, {:?}",
-                            &app_id, &exec, gpu_idx, seat_and_serial
-                        );
                         activation_state.request_token_with_data(
                             &state.queue_handle,
                             ExecRequestData {
@@ -394,7 +390,7 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
 
     loop {
         if app_data.exit {
-            println!("Exiting...");
+            log::debug!("Exiting COSMIC wayland loop...");
             break;
         }
         event_loop.dispatch(None, &mut app_data).unwrap();
@@ -635,7 +631,6 @@ impl CosmicCompBackend {
     ) -> Option<Task<AppTrayMessage>> {
         match outgoing {
             WaylandOutgoing::Exec(app_id, exec) => {
-                println!("Sending a tokenrequest {} {}", &app_id, &exec);
                 if let Some(tx) = self.wayland_sender.as_ref() {
                     let _ = tx.send(WaylandRequest::TokenRequest {
                         app_id,
