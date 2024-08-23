@@ -1,5 +1,5 @@
 use clock::{Clock, ClockMessage};
-use iced::{widget::row, Length};
+use iced::{widget::row, Length, Task};
 
 mod clock;
 
@@ -20,10 +20,7 @@ impl SettingsTray {
         }
     }
 
-    pub fn handle_message(
-        &mut self,
-        message: SettingsTrayMessage,
-    ) -> iced::Command<SettingsTrayMessage> {
+    pub fn handle_message(&mut self, message: SettingsTrayMessage) -> Task<SettingsTrayMessage> {
         match message {
             SettingsTrayMessage::Clock(clock_msg) => self
                 .clock

@@ -4,7 +4,7 @@ use std::{
 };
 
 use chrono::{Local, Timelike, Utc};
-use iced::{futures::SinkExt, widget::column, Command, Length};
+use iced::{futures::SinkExt, widget::column, Length, Task};
 
 #[derive(Clone, Debug)]
 pub enum ClockMessage {
@@ -25,12 +25,12 @@ impl Clock {
         }
     }
 
-    pub fn handle_message(&mut self, clock_message: ClockMessage) -> iced::Command<ClockMessage> {
+    pub fn handle_message(&mut self, clock_message: ClockMessage) -> Task<ClockMessage> {
         match clock_message {
             ClockMessage::UpdateClock(new_time, new_date) => {
                 self.time = new_time;
                 self.date = new_date;
-                Command::none()
+                Task::none()
             }
         }
     }
@@ -38,10 +38,10 @@ impl Clock {
     pub fn view(&self) -> iced::Element<ClockMessage> {
         iced::widget::container(column![
             iced::widget::text!("{}", self.time)
-                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                // .horizontal_alignment(iced::alignment::Horizontal::Center)
                 .size(14.0),
             iced::widget::text!("{}", self.date)
-                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                // .horizontal_alignment(iced::alignment::Horizontal::Center)
                 .size(10.0)
         ])
         .center_y(Length::Fill)
@@ -49,10 +49,8 @@ impl Clock {
     }
 
     pub fn subscription(&self) -> iced::Subscription<ClockMessage> {
-        iced::subscription::channel(
-            std::any::TypeId::of::<ClockMessage>(),
-            0,
-            |mut output| async move {
+        iced::Subscription::run(|| {
+            iced::stream::channel(0, |mut output| async move {
                 loop {
                     let now = Local::now();
                     let formatted_time = now.format("%I:%M %p").to_string();
@@ -79,7 +77,7 @@ impl Clock {
                         }
                     };
                 }
-            },
-        )
+            })
+        })
     }
 }

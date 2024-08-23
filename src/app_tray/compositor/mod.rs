@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
-use iced::Subscription;
+use iced::{Subscription, Task};
 
 use super::{AppTrayMessage, ApplicationGroup};
 
@@ -38,7 +38,7 @@ impl CompositorBackend {
         &mut self,
         active_toplevels: &mut HashMap<String, ApplicationGroup>,
         incoming: WaylandIncoming,
-    ) -> Option<iced::Command<AppTrayMessage>> {
+    ) -> Option<Task<AppTrayMessage>> {
         match (self, incoming) {
             (Self::Cosmic(backend), WaylandIncoming::Cosmic(evt)) => {
                 backend.handle_incoming(active_toplevels, evt)
@@ -52,7 +52,7 @@ impl CompositorBackend {
         &mut self,
         active_toplevels: &mut HashMap<String, ApplicationGroup>,
         outgoing: WaylandOutgoing,
-    ) -> Option<iced::Command<AppTrayMessage>> {
+    ) -> Option<Task<AppTrayMessage>> {
         match self {
             Self::Cosmic(backend) => backend.handle_outgoing(active_toplevels, outgoing),
             Self::None => None,

@@ -1,7 +1,7 @@
 use iced::{
+    border::Radius,
     widget::{column, row},
-    window::Id,
-    Application, Command, Padding, Radius, Subscription, Theme,
+    Element, Length, Padding, Subscription, Task, Theme,
 };
 
 use crate::{
@@ -23,44 +23,21 @@ pub struct Panel<'a> {
 }
 
 impl<'a> Panel<'a> {
-    pub fn new(flags: PanelFlags) -> Self {
-        Self {
-            app_tray: AppTray::new(flags.config.app_tray, &flags.compositor),
-            settings_tray: SettingsTray::new(),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Message {
-    AppTray(AppTrayMessage),
-    SettingsTray(SettingsTrayMessage),
-}
-
-impl<'a> Application for Panel<'a> {
-    type Message = Message;
-    type Theme = Theme;
-    type Executor = iced::executor::Default;
-    type Renderer = iced::Renderer;
-    type Flags = PanelFlags;
-
-    fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
-        (Panel::new(flags), Command::<self::Message>::none())
+    pub fn new(flags: PanelFlags) -> (Self, Task<Message>) {
+        (
+            Self {
+                app_tray: AppTray::new(flags.config.app_tray, &flags.compositor),
+                settings_tray: SettingsTray::new(),
+            },
+            Task::none(),
+        )
     }
 
-    fn scale_factor(&self, _id: Id) -> f64 {
-        2.0.into()
-    }
-
-    fn theme(&self, _id: iced::window::Id) -> Self::Theme {
-        Theme::Dark
-    }
-
-    fn title(&self, _id: iced::window::Id) -> String {
+    pub fn title(&self) -> String {
         "Window".into()
     }
 
-    fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+    pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::AppTray(app_tray_msg) => self
                 .app_tray
@@ -73,10 +50,11 @@ impl<'a> Application for Panel<'a> {
         }
     }
 
-    fn view(
-        &self,
-        _id: iced::window::Id,
-    ) -> iced::Element<'_, Self::Message, Self::Theme, Self::Renderer> {
+    pub fn theme(&self, _id: iced::window::Id) -> Theme {
+        Theme::Dark
+    }
+
+    pub fn view(&self) -> Element<Message> {
         let panel_items = row![
             self.app_tray.view().map(Message::AppTray),
             self.settings_tray.view().map(Message::SettingsTray)
@@ -96,14 +74,21 @@ impl<'a> Application for Panel<'a> {
             }),
             panel_items
         ])
-        .fill()
+        .width(Length::Fill)
+        .height(Length::Fill)
         .into()
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
+    pub fn subscription(&self) -> Subscription<Message> {
         Subscription::batch(vec![
             self.settings_tray.subscription().map(Message::SettingsTray),
             self.app_tray.subscription().map(Message::AppTray),
         ])
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum Message {
+    AppTray(AppTrayMessage),
+    SettingsTray(SettingsTrayMessage),
 }

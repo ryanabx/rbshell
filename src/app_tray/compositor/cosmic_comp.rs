@@ -39,7 +39,7 @@ use iced::{
         lock::Mutex,
         SinkExt, StreamExt,
     },
-    subscription,
+    Subscription, Task,
 };
 use once_cell::sync::Lazy;
 
@@ -520,25 +520,23 @@ impl CosmicCompBackend {
         }
     }
 
-    pub fn wayland_subscription(&self) -> iced::Subscription<CosmicIncoming> {
-        subscription::channel(
-            std::any::TypeId::of::<CosmicIncoming>(),
-            50,
-            move |mut output| async move {
+    pub fn wayland_subscription(&self) -> Subscription<CosmicIncoming> {
+        Subscription::run(|| {
+            iced::stream::channel(50, move |mut output| async move {
                 let mut state = State::Waiting;
 
                 loop {
                     state = start_listening(state, &mut output).await;
                 }
-            },
-        )
+            })
+        })
     }
 
     pub fn handle_incoming(
         &mut self,
         active_toplevels: &mut HashMap<String, ApplicationGroup>,
         incoming: CosmicIncoming,
-    ) -> Option<iced::Command<AppTrayMessage>> {
+    ) -> Option<Task<AppTrayMessage>> {
         match incoming {
             CosmicIncoming::Init(wayland_sender) => {
                 self.wayland_sender.replace(wayland_sender);
@@ -570,9 +568,9 @@ impl CosmicCompBackend {
                 ToplevelUpdate::Update(handle, info) => {
                     // TODO probably want to make sure it is removed
                     if info.app_id.is_empty() {
-                        return Some(iced::Command::none());
+                        return Some(Task::none());
                     } else if !active_toplevels.contains_key(&info.app_id) {
-                        return Some(iced::Command::none());
+                        return Some(Task::none());
                     }
 
                     for (t_handle, t_info) in
@@ -634,7 +632,7 @@ impl CosmicCompBackend {
         &mut self,
         active_toplevels: &mut HashMap<String, ApplicationGroup>,
         outgoing: WaylandOutgoing,
-    ) -> Option<iced::Command<AppTrayMessage>> {
+    ) -> Option<Task<AppTrayMessage>> {
         match outgoing {
             WaylandOutgoing::Exec(app_id, exec) => {
                 println!("Sending a tokenrequest {} {}", &app_id, &exec);

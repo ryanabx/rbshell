@@ -5,9 +5,10 @@ use compositor::WaylandIncoming;
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
-    event::{self, listen_with},
+    border::Radius,
     widget::{button, column, Container},
-    Background, Border, Element, Length, Radius, Theme,
+    window::Id,
+    Background, Border, Element, Length, Task, Theme,
 };
 
 use crate::{
@@ -24,6 +25,7 @@ pub struct AppTray<'a> {
     pub active_toplevels: HashMap<String, ApplicationGroup>,
     backend: CompositorBackend,
     config: AppTrayConfig,
+    context_menu: Option<Id>,
 }
 
 #[derive(Clone, Debug)]
@@ -32,6 +34,7 @@ pub enum AppTrayMessage {
     WaylandOut(WaylandOutgoing),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
+    ContextMenu(String),
 }
 
 impl<'a> AppTray<'a> {
@@ -41,29 +44,31 @@ impl<'a> AppTray<'a> {
             active_toplevels: HashMap::new(),
             backend: CompositorBackend::new(compositor),
             config,
+            context_menu: None,
         }
     }
 
-    pub fn handle_message(
-        &mut self,
-        app_tray_message: AppTrayMessage,
-    ) -> iced::Command<AppTrayMessage> {
+    pub fn handle_message(&mut self, app_tray_message: AppTrayMessage) -> Task<AppTrayMessage> {
         match app_tray_message {
             AppTrayMessage::WaylandIn(evt) => self
                 .backend
                 .handle_message(&mut self.active_toplevels, evt)
-                .unwrap_or(iced::Command::none()),
+                .unwrap_or(Task::none()),
             AppTrayMessage::WaylandOut(evt) => self
                 .backend
                 .handle_outgoing_message(&mut self.active_toplevels, evt)
-                .unwrap_or(iced::Command::none()),
+                .unwrap_or(Task::none()),
             AppTrayMessage::NewSeat(_) => {
                 println!("New seat!");
-                iced::Command::none()
+                Task::none()
             }
             AppTrayMessage::RemovedSeat(_) => {
                 println!("Removed seat!");
-                iced::Command::none()
+                Task::none()
+            }
+            AppTrayMessage::ContextMenu(app_id) => {
+                println!("App id requested: {}", &app_id);
+                Task::none()
             }
         }
     }
@@ -113,15 +118,15 @@ impl<'a> AppTray<'a> {
             self.backend
                 .wayland_subscription()
                 .map(AppTrayMessage::WaylandIn),
-            listen_with(|e, _, _| match e {
-                iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
-                    event::wayland::Event::Seat(e, seat),
-                )) => match e {
-                    event::wayland::SeatEvent::Enter => Some(AppTrayMessage::NewSeat(seat)),
-                    event::wayland::SeatEvent::Leave => Some(AppTrayMessage::RemovedSeat(seat)),
-                },
-                _ => None,
-            }),
+            // listen_with(|e, _, _| match e {
+            //     iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
+            //         event::wayland::Event::Seat(e, seat),
+            //     )) => match e {
+            //         event::wayland::SeatEvent::Enter => Some(AppTrayMessage::NewSeat(seat)),
+            //         event::wayland::SeatEvent::Leave => Some(AppTrayMessage::RemovedSeat(seat)),
+            //     },
+            //     _ => None,
+            // }),
         ])
     }
 }
@@ -136,55 +141,61 @@ pub fn get_tray_widget<'a>(
     desktop_entry: Option<&DesktopEntry<'a>>,
     app_info: ApplicationGroup,
     active_window: Option<WindowHandle>,
-) -> iced::widget::Button<'a, AppTrayMessage> {
+) -> iced::widget::MouseArea<'a, AppTrayMessage> {
     let icon_path = desktop_entry
         .and_then(|entry| entry.icon())
         .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
         .or_else(|| get_default_icon());
-    match icon_path {
-        Some(path) => {
-            if path.extension().is_some_and(|x| x == "svg") {
-                iced::widget::button(column![
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
-                    iced::widget::svg(path)
-                        .content_fit(iced::ContentFit::Contain)
-                        .width(Length::Fill)
-                        .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
-                ])
-            } else {
-                iced::widget::button(column![
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
-                    iced::widget::image(path)
-                        .content_fit(iced::ContentFit::Contain)
-                        .width(Length::Fill)
-                        .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
-                ])
+    iced::widget::mouse_area(
+        match icon_path {
+            Some(path) => {
+                if path.extension().is_some_and(|x| x == "svg") {
+                    iced::widget::button(column![
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), true),
+                        iced::widget::svg(path)
+                            .content_fit(iced::ContentFit::Contain)
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), false)
+                    ])
+                } else {
+                    iced::widget::button(column![
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), true),
+                        iced::widget::image(path)
+                            .content_fit(iced::ContentFit::Contain)
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), false)
+                    ])
+                }
             }
+            None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
+                .width(Length::Fill)
+                .height(Length::Fill),
         }
-        None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-            .width(Length::Fill)
-            .height(Length::Fill),
-    }
-    .width(Length::Fill)
-    .height(Length::Fill)
-    .padding(4)
-    .on_press_maybe(if app_info.toplevels.is_empty() {
-        desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
-            AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .padding(4)
+        .on_press_maybe(if app_info.toplevels.is_empty() {
+            desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
+                AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
+                    app_id.to_string(),
+                    exec.to_string(),
+                ))
+            })
+        } else if app_info.toplevels.len() == 1 {
+            Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
+                app_info.toplevels.keys().next().unwrap().clone(),
+            )))
+        } else {
+            None
+            // TODO
         })
-    } else if app_info.toplevels.len() == 1 {
-        Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
-            app_info.toplevels.keys().next().unwrap().clone(),
-        )))
-    } else {
-        None
-        // TODO
-    })
-    .style(move |theme, status| {
-        tray_button_style(theme, status, &app_info, &active_window.as_ref())
-    })
+        .style(move |theme, status| {
+            tray_button_style(theme, status, &app_info, &active_window.as_ref())
+        }),
+    )
+    .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string()))
     // .on_press_maybe(if toplevels.is_empty() {
     //     launch_on_preferred_gpu(desktop_info, gpus)
     // } else if toplevels.len() == 1 {
@@ -201,24 +212,22 @@ fn get_horizontal_rule<'a>(
 ) -> Container<'a, AppTrayMessage> {
     let transparent = force_transparent || app_info.toplevels.is_empty();
     iced::widget::container(
-        iced::widget::horizontal_rule(1)
-            .style(move |theme: &Theme| iced::widget::rule::Style {
-                color: if transparent {
-                    iced::Color::TRANSPARENT
-                } else {
-                    theme.palette().primary
-                },
-                width: (2.0) as u16,
-                radius: 4.into(),
-                fill_mode: iced::widget::rule::FillMode::Full,
-            })
-            .width(Length::Fixed(
-                if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
-                    12.0
-                } else {
-                    6.0
-                },
-            )),
+        iced::widget::horizontal_rule(1).style(move |theme: &Theme| iced::widget::rule::Style {
+            color: if transparent {
+                iced::Color::TRANSPARENT
+            } else {
+                theme.palette().primary
+            },
+            width: (2.0) as u16,
+            radius: 4.into(),
+            fill_mode: iced::widget::rule::FillMode::Full,
+        }), // .width(Length::Fixed(
+            //     if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
+            //         12.0
+            //     } else {
+            //         6.0
+            //     },
+            // )),
     )
     .center_x(Length::Fill)
 }
