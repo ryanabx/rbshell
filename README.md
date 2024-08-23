@@ -1,4 +1,4 @@
-# ryanabx-shell
+# rbshell
 
 A compositor-agnostic desktop shell!
 
@@ -30,9 +30,9 @@ cargo build
 
 ## Contributing
 
-The first thing you should do if you'd like to contribute is [submit an issue](https://github.com/ryanabx/ryanabx-shell/issues/new) describing the feature you'd like to implement. This helps to avoid potential duplicate work if I'm already working on such a feature!
+The first thing you should do if you'd like to contribute is [submit an issue](https://github.com/ryanabx/rbshell/issues/new) describing the feature you'd like to implement. This helps to avoid potential duplicate work if I'm already working on such a feature!
 
-Also check out the [issues](https://github.com/ryanabx/ryanabx-shell/issues) I've written out, as that will give an idea of the roadmap I'm looking at!
+Also check out the [issues](https://github.com/ryanabx/rbshell/issues) I've written out, as that will give an idea of the roadmap I'm looking at!
 
 ## License
 

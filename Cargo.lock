@@ -3206,7 +3206,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ryanabx-shell"
+name = "rbshell"
 version = "0.1.0"
 dependencies = [
  "chrono",

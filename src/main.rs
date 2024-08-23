@@ -28,7 +28,7 @@ pub struct CliArgs {
     #[arg(long)]
     compositor: Option<String>,
     /// Specify the configuration directory for the config file
-    /// Defaults to ~/.config/ryanabx-shell/config.json
+    /// Defaults to ~/.config/rbshell/config.json
     #[arg(long)]
     config: Option<PathBuf>,
     /// The scale to bring all the components up by
@@ -57,7 +57,7 @@ fn main() -> Result<(), PanelError> {
     let mut panel_settings = Settings::with_flags(PanelFlags {
         compositor: args.compositor.unwrap_or(compositor_default()),
         config: PanelConfig::from_file_or_default(&args.config.unwrap_or(
-            Path::new(&env::var("HOME").unwrap()).join(".config/ryanabx-shell/config.json"),
+            Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json"),
         )),
     });
     panel_settings.initial_surface = InitialSurface::LayerSurface(layer_surface_settings);
