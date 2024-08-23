@@ -11,7 +11,7 @@ readme = "README.md"
 [dependencies]
 freedesktop-desktop-entry = "0.7.0"
 freedesktop-icons = "0.2.6"
-iced = { git = "https://github.com/ryanabx/iced", branch = "attempt-4-163", features = [ "wayland", "tiny-skia", "image", "svg", "fira-sans", "auto-detect-theme" ] }
+iced = { git = "https://github.com/ryanabx/iced", branch = "attempt-4-163", features = [ "wayland", "tiny-skia", "image", "svg", "fira-sans", "auto-detect-theme", "multi-window" ] }
 cctk = { git = "https://github.com/pop-os/cosmic-protocols", package = "cosmic-client-toolkit", rev = "c8d3a1c" }
 cosmic-protocols = { git = "https://github.com/pop-os/cosmic-protocols", default-features = false, features = [
     "client",
