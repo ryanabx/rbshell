@@ -54,12 +54,13 @@ fn main() -> Result<(), PanelError> {
         exclusive_zone: 48,
         ..Default::default()
     };
-    let mut panel_settings = Settings::with_flags(PanelFlags {
-        compositor: args.compositor.unwrap_or(compositor_default()),
-        config: PanelConfig::from_file_or_default(&args.config.unwrap_or(
-            Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json"),
-        )),
-    });
+    let mut panel_settings =
+        Settings::with_flags(PanelFlags {
+            compositor: args.compositor.unwrap_or(compositor_default()),
+            config: PanelConfig::from_file_or_default(&args.config.unwrap_or(
+                Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json"),
+            )),
+        });
     panel_settings.initial_surface = InitialSurface::LayerSurface(layer_surface_settings);
     panel::Panel::run(panel_settings).map_err(PanelError::Iced)
 }

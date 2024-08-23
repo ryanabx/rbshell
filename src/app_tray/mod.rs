@@ -5,7 +5,10 @@ use compositor::WaylandIncoming;
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
-    event::{self, listen_with}, widget::{button, column, Container}, window::Id, Background, Border, Element, Length, Radius, Theme
+    event::{self, listen_with},
+    widget::{button, column, Container},
+    window::Id,
+    Background, Border, Element, Length, Radius, Theme,
 };
 
 use crate::{
@@ -65,8 +68,9 @@ impl<'a> AppTray<'a> {
             AppTrayMessage::RemovedSeat(_) => {
                 println!("Removed seat!");
                 iced::Command::none()
-            },
+            }
             AppTrayMessage::ContextMenu(app_id) => {
+                println!("App id requested: {}", &app_id);
                 iced::Command::none()
             }
         }
@@ -140,55 +144,61 @@ pub fn get_tray_widget<'a>(
     desktop_entry: Option<&DesktopEntry<'a>>,
     app_info: ApplicationGroup,
     active_window: Option<WindowHandle>,
-) -> iced::widget::Button<'a, AppTrayMessage> {
+) -> iced::widget::MouseArea<'a, AppTrayMessage> {
     let icon_path = desktop_entry
         .and_then(|entry| entry.icon())
         .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
         .or_else(|| get_default_icon());
-    match icon_path {
-        Some(path) => {
-            if path.extension().is_some_and(|x| x == "svg") {
-                iced::widget::button(column![
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
-                    iced::widget::svg(path)
-                        .content_fit(iced::ContentFit::Contain)
-                        .width(Length::Fill)
-                        .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
-                ])
-            } else {
-                iced::widget::button(column![
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
-                    iced::widget::image(path)
-                        .content_fit(iced::ContentFit::Contain)
-                        .width(Length::Fill)
-                        .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
-                ])
+    iced::widget::mouse_area(
+        match icon_path {
+            Some(path) => {
+                if path.extension().is_some_and(|x| x == "svg") {
+                    iced::widget::button(column![
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), true),
+                        iced::widget::svg(path)
+                            .content_fit(iced::ContentFit::Contain)
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), false)
+                    ])
+                } else {
+                    iced::widget::button(column![
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), true),
+                        iced::widget::image(path)
+                            .content_fit(iced::ContentFit::Contain)
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                        get_horizontal_rule(&app_info, &active_window.as_ref(), false)
+                    ])
+                }
             }
+            None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
+                .width(Length::Fill)
+                .height(Length::Fill),
         }
-        None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-            .width(Length::Fill)
-            .height(Length::Fill),
-    }
-    .width(Length::Fill)
-    .height(Length::Fill)
-    .padding(4)
-    .on_press_maybe(if app_info.toplevels.is_empty() {
-        desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
-            AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(app_id.to_string(), exec.to_string()))
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .padding(4)
+        .on_press_maybe(if app_info.toplevels.is_empty() {
+            desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
+                AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
+                    app_id.to_string(),
+                    exec.to_string(),
+                ))
+            })
+        } else if app_info.toplevels.len() == 1 {
+            Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
+                app_info.toplevels.keys().next().unwrap().clone(),
+            )))
+        } else {
+            None
+            // TODO
         })
-    } else if app_info.toplevels.len() == 1 {
-        Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
-            app_info.toplevels.keys().next().unwrap().clone(),
-        )))
-    } else {
-        None
-        // TODO
-    })
-    .style(move |theme, status| {
-        tray_button_style(theme, status, &app_info, &active_window.as_ref())
-    })
+        .style(move |theme, status| {
+            tray_button_style(theme, status, &app_info, &active_window.as_ref())
+        }),
+    )
+    .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string()))
     // .on_press_maybe(if toplevels.is_empty() {
     //     launch_on_preferred_gpu(desktop_info, gpus)
     // } else if toplevels.len() == 1 {
