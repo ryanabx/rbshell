@@ -292,28 +292,6 @@ impl ToplevelInfoHandler for WaylandData {
     }
 }
 
-// if let Some(security_context_manager) = security_context_manager.as_ref() {
-//     match security_context_manager.create_listener::<SpaceContainer>(qh) {
-//         Ok(security_context) => {
-//             security_context.set_sandbox_engine(NAME.to_string());
-//             security_context.commit();
-
-//             let data = security_context.data::<SecurityContext>().unwrap();
-//             let privileged_socket = data.conn.lock().unwrap().take().unwrap();
-//             applet_env.push((
-//                 "X_PRIVILEGED_WAYLAND_SOCKET".to_string(),
-//                 privileged_socket.as_raw_fd().to_string(),
-//             ));
-
-//             fds.push(privileged_socket.into());
-//             panel_client.security_ctx = Some(security_context);
-//         },
-//         Err(why) => {
-//             error!(?why, "Failed to create a listener");
-//         },
-//     }
-// }
-
 fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandRequest>) {
     let socket = std::env::var("X_PRIVILEGED_WAYLAND_SOCKET")
         .ok()
@@ -363,12 +341,11 @@ fn wayland_handler(tx: UnboundedSender<CosmicIncoming>, rx: Channel<WaylandReque
                     gpu_idx,
                 } => {
                     if let Some(activation_state) = state.activation_state.as_ref() {
-                        let seat_and_serial = state
-                        .seat_state
-                        .seats()
-                        .next()
-                        .map(|seat| (seat, 0));
-                        println!("HERE: {} {} {:?}, {:?}", &app_id, &exec, gpu_idx, seat_and_serial);
+                        let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
+                        println!(
+                            "HERE: {} {} {:?}, {:?}",
+                            &app_id, &exec, gpu_idx, seat_and_serial
+                        );
                         activation_state.request_token_with_data(
                             &state.queue_handle,
                             ExecRequestData {

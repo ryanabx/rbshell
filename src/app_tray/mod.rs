@@ -102,7 +102,7 @@ impl<'a> AppTray<'a> {
                     iced::widget::container(x)
                         .width(48.0)
                         .height(48.0)
-                        .padding(6.0),
+                        .padding(4.0),
                 )
             });
         iced::widget::row(app_tray_apps).into()
@@ -145,19 +145,21 @@ pub fn get_tray_widget<'a>(
         Some(path) => {
             if path.extension().is_some_and(|x| x == "svg") {
                 iced::widget::button(column![
+                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
                     iced::widget::svg(path)
                         .content_fit(iced::ContentFit::Contain)
                         .width(Length::Fill)
                         .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref())
+                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
                 ])
             } else {
                 iced::widget::button(column![
+                    get_horizontal_rule(&app_info, &active_window.as_ref(), true),
                     iced::widget::image(path)
                         .content_fit(iced::ContentFit::Contain)
                         .width(Length::Fill)
                         .height(Length::Fill),
-                    get_horizontal_rule(&app_info, &active_window.as_ref())
+                    get_horizontal_rule(&app_info, &active_window.as_ref(), false)
                 ])
             }
         }
@@ -195,30 +197,29 @@ pub fn get_tray_widget<'a>(
 fn get_horizontal_rule<'a>(
     app_info: &ApplicationGroup,
     active_window: &Option<&WindowHandle>,
+    force_transparent: bool,
 ) -> Container<'a, AppTrayMessage> {
-    if app_info.toplevels.is_empty() {
-        iced::widget::container(iced::widget::Space::new(
-            Length::Fixed(6.0),
-            Length::Fixed(2.0),
-        ))
-    } else {
-        iced::widget::container(
-            iced::widget::horizontal_rule(1)
-                .style(move |theme: &Theme| iced::widget::rule::Style {
-                    color: theme.palette().primary,
-                    width: (2.0) as u16,
-                    radius: 4.into(),
-                    fill_mode: iced::widget::rule::FillMode::Full,
-                })
-                .width(Length::Fixed(
-                    if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
-                        12.0
-                    } else {
-                        6.0
-                    },
-                )),
-        )
-    }
+    let transparent = force_transparent || app_info.toplevels.is_empty();
+    iced::widget::container(
+        iced::widget::horizontal_rule(1)
+            .style(move |theme: &Theme| iced::widget::rule::Style {
+                color: if transparent {
+                    iced::Color::TRANSPARENT
+                } else {
+                    theme.palette().primary
+                },
+                width: (2.0) as u16,
+                radius: 4.into(),
+                fill_mode: iced::widget::rule::FillMode::Full,
+            })
+            .width(Length::Fixed(
+                if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
+                    12.0
+                } else {
+                    6.0
+                },
+            )),
+    )
     .center_x(Length::Fill)
 }
 
@@ -242,9 +243,9 @@ fn tray_button_style<'a>(
         }
     } else if active_window.is_some_and(|x| app_info.toplevels.contains_key(x)) {
         if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-            (0.21, 0.2)
+            (0.26, 0.25)
         } else {
-            (0.11, 0.1)
+            (0.21, 0.20)
         }
     } else {
         if matches!(status, button::Status::Hovered | button::Status::Pressed) {

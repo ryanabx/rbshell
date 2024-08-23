@@ -3,15 +3,16 @@ use std::collections::HashMap;
 use cctk::toplevel_info::ToplevelInfo;
 use cosmic_comp::CosmicCompBackend;
 use cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1;
+use iced::Subscription;
 
 use super::{AppTrayMessage, ApplicationGroup};
 
 pub mod cosmic_comp;
-pub mod wlr;
 
 #[derive(Clone, Debug)]
 pub enum CompositorBackend {
     Cosmic(CosmicCompBackend),
+    None,
     #[allow(dead_code)]
     NotSupported,
 }
@@ -20,6 +21,7 @@ impl CompositorBackend {
     pub fn new(compositor: &str) -> Self {
         match compositor {
             "COSMIC" => Self::Cosmic(CosmicCompBackend::new()),
+            "none" => Self::None,
             desktop => panic!("Unsupported desktop {desktop}. Specify a backend with the env variable RYANABX_SHELL_DESKTOP"),
         }
     }
@@ -27,7 +29,8 @@ impl CompositorBackend {
     pub fn wayland_subscription(&self) -> iced::Subscription<WaylandIncoming> {
         match self {
             Self::Cosmic(backend) => backend.wayland_subscription().map(WaylandIncoming::Cosmic),
-            Self::NotSupported => todo!(),
+            Self::None => Subscription::none(),
+            Self::NotSupported => panic!("Not supported"),
         }
     }
 
@@ -40,8 +43,8 @@ impl CompositorBackend {
             (Self::Cosmic(backend), WaylandIncoming::Cosmic(evt)) => {
                 backend.handle_incoming(active_toplevels, evt)
             }
-            (Self::NotSupported, _) => todo!(),
-            (_, WaylandIncoming::NotSupported) => todo!(),
+            (Self::None, _) => None,
+            (Self::NotSupported, _) | (_, WaylandIncoming::NotSupported) => panic!("Not supported"),
         }
     }
 
@@ -52,7 +55,8 @@ impl CompositorBackend {
     ) -> Option<iced::Command<AppTrayMessage>> {
         match self {
             Self::Cosmic(backend) => backend.handle_outgoing(active_toplevels, outgoing),
-            _ => todo!(),
+            Self::None => None,
+            Self::NotSupported => panic!("Not supported"),
         }
     }
 
@@ -62,7 +66,8 @@ impl CompositorBackend {
     ) -> Option<WindowHandle> {
         match self {
             Self::Cosmic(backend) => backend.active_window(active_toplevels),
-            _ => todo!(),
+            Self::None => None,
+            Self::NotSupported => panic!("Not supported"),
         }
     }
 }
