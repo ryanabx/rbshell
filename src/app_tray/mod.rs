@@ -5,9 +5,7 @@ use compositor::WaylandIncoming;
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
-    event::{self, listen_with},
-    widget::{button, column, Container},
-    Background, Border, Element, Length, Radius, Theme,
+    event::{self, listen_with}, widget::{button, column, Container}, window::Id, Background, Border, Element, Length, Radius, Theme
 };
 
 use crate::{
@@ -24,6 +22,7 @@ pub struct AppTray<'a> {
     pub active_toplevels: HashMap<String, ApplicationGroup>,
     backend: CompositorBackend,
     config: AppTrayConfig,
+    context_menu: Option<Id>,
 }
 
 #[derive(Clone, Debug)]
@@ -32,6 +31,7 @@ pub enum AppTrayMessage {
     WaylandOut(WaylandOutgoing),
     NewSeat(WlSeat),
     RemovedSeat(WlSeat),
+    ContextMenu(String),
 }
 
 impl<'a> AppTray<'a> {
@@ -41,6 +41,7 @@ impl<'a> AppTray<'a> {
             active_toplevels: HashMap::new(),
             backend: CompositorBackend::new(compositor),
             config,
+            context_menu: None,
         }
     }
 
@@ -63,6 +64,9 @@ impl<'a> AppTray<'a> {
             }
             AppTrayMessage::RemovedSeat(_) => {
                 println!("Removed seat!");
+                iced::Command::none()
+            },
+            AppTrayMessage::ContextMenu(app_id) => {
                 iced::Command::none()
             }
         }
