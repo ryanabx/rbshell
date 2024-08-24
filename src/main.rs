@@ -59,6 +59,8 @@ fn main() -> Result<(), PanelError> {
     iced::application(Panel::title, Panel::update, Panel::view)
         .subscription(Panel::subscription)
         .window_size((1280.0, 48.0))
+        .theme(Panel::theme)
+        .decorations(false)
         .run_with(|| Panel::new(config, compositor))
         .map_err(PanelError::Iced)
 }

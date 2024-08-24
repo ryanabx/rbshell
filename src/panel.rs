@@ -50,8 +50,8 @@ impl<'a> Panel<'a> {
         }
     }
 
-    pub fn theme(&self, _id: iced::window::Id) -> Theme {
-        Theme::Dark
+    pub fn theme(&self) -> Theme {
+        Theme::CatppuccinMocha
     }
 
     pub fn view(&self) -> Element<Message> {

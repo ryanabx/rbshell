@@ -5,6 +5,7 @@ use compositor::{Compositor, WaylandIncoming};
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
+    alignment::Vertical,
     border::Radius,
     widget::{button, column, Container},
     window::Id,
@@ -74,6 +75,7 @@ impl<'a> AppTray<'a> {
     }
 
     pub fn view(&self) -> iced::Element<AppTrayMessage> {
+        let active_window = self.backend.active_window(&self.active_toplevels);
         // Get app tray apps
         let app_tray_apps = self
             .config
@@ -98,15 +100,20 @@ impl<'a> AppTray<'a> {
             }))
             .map(|(app_id, group)| {
                 let entry = &self.de_cache.0.get(&app_id);
-                let active_window = self.backend.active_window(&self.active_toplevels);
 
-                get_tray_widget(&app_id, *entry, group, active_window.map(|f| f.clone()))
+                get_tray_widget(
+                    &app_id,
+                    *entry,
+                    group,
+                    active_window.as_ref().map(|f| f.clone()),
+                )
             })
             .map(|x| {
                 Element::from(
                     iced::widget::container(x)
-                        .width(48.0)
-                        .height(48.0)
+                        // .width(Length::Fill)
+                        .width(48)
+                        .height(48)
                         .padding(4.0),
                 )
             });
@@ -221,14 +228,15 @@ fn get_horizontal_rule<'a>(
             width: (2.0) as u16,
             radius: 4.into(),
             fill_mode: iced::widget::rule::FillMode::Full,
-        }), // .width(Length::Fixed(
-            //     if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
-            //         12.0
-            //     } else {
-            //         6.0
-            //     },
-            // )),
+        }),
     )
+    .width(Length::Fixed(
+        if active_window.is_some_and(|w| app_info.toplevels.contains_key(w)) {
+            12.0
+        } else {
+            6.0
+        },
+    ))
     .center_x(Length::Fill)
 }
 
