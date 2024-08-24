@@ -8,7 +8,7 @@ use iced::{
     alignment::Vertical,
     border::Radius,
     widget::{button, column, Container},
-    window::Id,
+    window::{self, Id, Settings},
     Background, Border, Element, Length, Task, Theme,
 };
 
