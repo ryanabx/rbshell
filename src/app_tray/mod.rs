@@ -5,10 +5,9 @@ use compositor::{Compositor, WaylandIncoming};
 use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
-    alignment::Vertical,
     border::Radius,
     widget::{button, column, Container},
-    window::{self, Id, Settings},
+    window::Id,
     Background, Border, Element, Length, Task, Theme,
 };
 
@@ -121,20 +120,10 @@ impl<'a> AppTray<'a> {
     }
 
     pub fn subscription(&self) -> iced::Subscription<AppTrayMessage> {
-        iced::Subscription::batch(vec![
-            self.backend
-                .wayland_subscription()
-                .map(AppTrayMessage::WaylandIn),
-            // listen_with(|e, _, _| match e {
-            //     iced::Event::PlatformSpecific(event::PlatformSpecific::Wayland(
-            //         event::wayland::Event::Seat(e, seat),
-            //     )) => match e {
-            //         event::wayland::SeatEvent::Enter => Some(AppTrayMessage::NewSeat(seat)),
-            //         event::wayland::SeatEvent::Leave => Some(AppTrayMessage::RemovedSeat(seat)),
-            //     },
-            //     _ => None,
-            // }),
-        ])
+        iced::Subscription::batch(vec![self
+            .backend
+            .wayland_subscription()
+            .map(AppTrayMessage::WaylandIn)])
     }
 }
 
