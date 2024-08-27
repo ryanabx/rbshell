@@ -56,14 +56,16 @@ fn main() -> Result<(), PanelError> {
             .config
             .unwrap_or(Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json")),
     );
-    iced::daemon(Panel::title, Panel::update, Panel::view)
+    let res = iced::daemon(Panel::title, Panel::update, Panel::view)
         // iced::application(Panel::title, Panel::update, Panel::view)
         .subscription(Panel::subscription)
         //     // .window_size((1280.0, 48.0))
         .theme(Panel::theme)
         // .decorations(false)
         .run_with(|| Panel::new(config, compositor))
-        .map_err(PanelError::Iced)
+        .map_err(PanelError::Iced);
+
+    res
 }
 
 fn compositor_default() -> String {
