@@ -43,12 +43,7 @@ use iced::{
 };
 use once_cell::sync::Lazy;
 
-use crate::app_tray::{
-    compositor::{WindowHandle, WindowInfo},
-    AppTrayMessage, ApplicationGroup,
-};
-
-use super::WaylandOutgoing;
+use crate::app_tray::AppTrayMessage;
 
 struct WaylandData {
     _conn: Connection,
@@ -413,6 +408,14 @@ pub enum CosmicIncoming {
 }
 
 #[derive(Clone, Debug)]
+pub enum CosmicOutgoing {
+    Exec(String, String),
+    Toggle(ZcosmicToplevelHandleV1),
+    #[allow(unused)]
+    Activate(ZcosmicToplevelHandleV1),
+}
+
+#[derive(Clone, Debug)]
 pub enum ToplevelUpdate {
     Add(ZcosmicToplevelHandleV1, ToplevelInfo),
     Update(ZcosmicToplevelHandleV1, ToplevelInfo),
@@ -502,6 +505,7 @@ async fn start_listening(
 pub struct CosmicCompBackend {
     wayland_sender: Option<Sender<WaylandRequest>>,
     active_workspaces: Vec<ZcosmicWorkspaceHandleV1>,
+    active_toplevels: HashMap<String, HashMap<ZcosmicToplevelHandleV1, ToplevelInfo>>,
     output_list: HashMap<WlOutput, OutputInfo>,
     _current_output: String, // TODO: Get current output
 }
@@ -511,6 +515,7 @@ impl CosmicCompBackend {
         Self {
             wayland_sender: None,
             active_workspaces: Vec::new(),
+            active_toplevels: HashMap::new(),
             output_list: HashMap::new(),
             _current_output: "".to_string(),
         }
@@ -528,11 +533,7 @@ impl CosmicCompBackend {
         })
     }
 
-    pub fn handle_incoming(
-        &mut self,
-        active_toplevels: &mut HashMap<String, ApplicationGroup>,
-        incoming: CosmicIncoming,
-    ) -> Option<Task<AppTrayMessage>> {
+    pub fn handle_incoming(&mut self, incoming: CosmicIncoming) -> Option<Task<AppTrayMessage>> {
         match incoming {
             CosmicIncoming::Init(wayland_sender) => {
                 self.wayland_sender.replace(wayland_sender);
@@ -542,22 +543,14 @@ impl CosmicCompBackend {
             CosmicIncoming::Toplevel(toplevel_update) => match toplevel_update {
                 ToplevelUpdate::Add(handle, info) => {
                     let app_id = info.app_id.clone();
-                    if active_toplevels.contains_key(&app_id) {
-                        active_toplevels
+                    if self.active_toplevels.contains_key(&app_id) {
+                        self.active_toplevels
                             .get_mut(&info.app_id)
                             .unwrap()
-                            .toplevels
-                            .insert(WindowHandle::Cosmic(handle), WindowInfo::Cosmic(info));
+                            .insert(handle, info);
                     } else {
-                        active_toplevels.insert(
-                            app_id.clone(),
-                            crate::app_tray::ApplicationGroup {
-                                toplevels: HashMap::from([(
-                                    WindowHandle::Cosmic(handle),
-                                    WindowInfo::Cosmic(info.clone()),
-                                )]),
-                            },
-                        );
+                        self.active_toplevels
+                            .insert(app_id.clone(), HashMap::from([(handle, info.clone())]));
                     }
                     None
                 }
@@ -565,18 +558,19 @@ impl CosmicCompBackend {
                     // TODO probably want to make sure it is removed
                     if info.app_id.is_empty() {
                         return Some(Task::none());
-                    } else if !active_toplevels.contains_key(&info.app_id) {
+                    } else if !self.active_toplevels.contains_key(&info.app_id) {
                         return Some(Task::none());
                     }
 
-                    for (t_handle, t_info) in
-                        &mut active_toplevels.get_mut(&info.app_id).unwrap().toplevels
+                    for (t_handle, t_info) in self
+                        .active_toplevels
+                        .get_mut(&info.app_id)
+                        .unwrap()
+                        .iter_mut()
                     {
-                        if let WindowHandle::Cosmic(c_handle) = t_handle {
-                            if &handle == c_handle {
-                                *t_info = WindowInfo::Cosmic(info);
-                                break;
-                            }
+                        if &handle == t_handle {
+                            *t_info = info;
+                            break;
                         }
                     }
 
@@ -584,20 +578,17 @@ impl CosmicCompBackend {
                 }
                 ToplevelUpdate::Remove(handle) => {
                     let mut target_app_id: Option<String> = None;
-                    for (app_id, app_info) in active_toplevels.iter_mut() {
-                        if app_info
-                            .toplevels
-                            .contains_key(&WindowHandle::Cosmic(handle.clone()))
-                        {
-                            app_info.toplevels.remove(&WindowHandle::Cosmic(handle));
-                            if app_info.toplevels.is_empty() {
+                    for (app_id, app_info) in self.active_toplevels.iter_mut() {
+                        if app_info.contains_key(&handle.clone()) {
+                            app_info.remove(&handle);
+                            if app_info.is_empty() {
                                 target_app_id = Some(app_id.clone());
                             }
                             break;
                         }
                     }
                     if let Some(app_id) = target_app_id {
-                        active_toplevels.remove(&app_id);
+                        self.active_toplevels.remove(&app_id);
                     }
                     None
                 }
@@ -624,13 +615,9 @@ impl CosmicCompBackend {
         }
     }
 
-    pub fn handle_outgoing(
-        &mut self,
-        active_toplevels: &mut HashMap<String, ApplicationGroup>,
-        outgoing: WaylandOutgoing,
-    ) -> Option<Task<AppTrayMessage>> {
+    pub fn handle_outgoing(&mut self, outgoing: CosmicOutgoing) -> Option<Task<AppTrayMessage>> {
         match outgoing {
-            WaylandOutgoing::Exec(app_id, exec) => {
+            CosmicOutgoing::Exec(app_id, exec) => {
                 if let Some(tx) = self.wayland_sender.as_ref() {
                     let _ = tx.send(WaylandRequest::TokenRequest {
                         app_id,
@@ -640,62 +627,42 @@ impl CosmicCompBackend {
                 }
                 None
             }
-            WaylandOutgoing::Toggle(window) => {
-                match window {
-                    WindowHandle::Cosmic(toplevel) => {
-                        if let Some(tx) = self.wayland_sender.as_ref() {
-                            let _ = tx.send(WaylandRequest::Toplevel(
-                                if self
-                                    .active_window(active_toplevels)
-                                    .is_some_and(|x| x == WindowHandle::Cosmic(toplevel.clone()))
-                                {
-                                    ToplevelRequest::Minimize(toplevel)
-                                } else {
-                                    ToplevelRequest::Activate(toplevel)
-                                },
-                            ));
-                        }
-                        // if let Some(p) = self.popup.take() {
-                        //     return destroy_popup(p.id);
-                        // }
-                        None
-                    }
-                    _ => panic!(),
+            CosmicOutgoing::Toggle(window) => {
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    let _ = tx.send(WaylandRequest::Toplevel(
+                        if self.active_window().is_some() {
+                            ToplevelRequest::Minimize(window)
+                        } else {
+                            ToplevelRequest::Activate(window)
+                        },
+                    ));
                 }
+                // if let Some(p) = self.popup.take() {
+                //     return destroy_popup(p.id);
+                // }
+                None
             }
-            WaylandOutgoing::Activate(window) => {
-                match window {
-                    WindowHandle::Cosmic(toplevel) => {
-                        if let Some(tx) = self.wayland_sender.as_ref() {
-                            let _ = tx.send(WaylandRequest::Toplevel(ToplevelRequest::Activate(
-                                toplevel,
-                            )));
-                        }
-                        // if let Some(p) = self.popup.take() {
-                        //     return destroy_popup(p.id);
-                        // }
-                        None
-                    }
-                    _ => panic!(),
+            CosmicOutgoing::Activate(window) => {
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    let _ = tx.send(WaylandRequest::Toplevel(ToplevelRequest::Activate(window)));
                 }
+                // if let Some(p) = self.popup.take() {
+                //     return destroy_popup(p.id);
+                // }
+                None
             }
         }
     }
 
-    pub fn active_window(
-        &self,
-        active_toplevels: &HashMap<String, ApplicationGroup>,
-    ) -> Option<WindowHandle> {
+    pub fn active_window(&self) -> Option<ZcosmicToplevelHandleV1> {
         if self.active_workspaces.is_empty() {
             return None;
         }
         let mut focused_toplevels: Vec<ZcosmicToplevelHandleV1> = Vec::new();
         let active_workspaces = self.active_workspaces.clone();
-        for (_, app_group) in active_toplevels.iter() {
-            for (handle, info) in &app_group.toplevels {
-                if let (WindowHandle::Cosmic(t_handle), WindowInfo::Cosmic(t_info)) = (handle, info)
-                {
-                    if t_info.state.contains(&cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::State::Activated)
+        for (_, app_group) in self.active_toplevels.iter() {
+            for (t_handle, t_info) in app_group.iter() {
+                if t_info.state.contains(&cosmic_protocols::toplevel_info::v1::client::zcosmic_toplevel_handle_v1::State::Activated)
                         && active_workspaces
                             .iter()
                             .any(|workspace| t_info.workspace.contains(workspace))
@@ -708,13 +675,8 @@ impl CosmicCompBackend {
                     {
                         focused_toplevels.push(t_handle.clone());
                     }
-                } else {
-                    panic!("Unknown window handle or window info");
-                }
             }
         }
-        focused_toplevels
-            .first()
-            .map(|f| WindowHandle::Cosmic(f.clone()))
+        focused_toplevels.first().map(|f| f.clone())
     }
 }

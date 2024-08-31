@@ -6,16 +6,10 @@ use iced::{
 };
 
 use crate::{
-    app_tray::{compositor::Compositor, AppTray, AppTrayMessage},
+    app_tray::{AppTray, AppTrayMessage},
     config::PanelConfig,
     settings_tray::{SettingsTray, SettingsTrayMessage},
 };
-
-#[derive(Clone, Debug)]
-pub struct PanelFlags {
-    pub compositor: Compositor,
-    pub config: PanelConfig,
-}
 
 #[derive(Clone, Debug)]
 pub struct Panel<'a> {
@@ -26,7 +20,7 @@ pub struct Panel<'a> {
 }
 
 impl<'a> Panel<'a> {
-    pub fn new(config: PanelConfig, compositor: Compositor) -> (Self, Task<Message>) {
+    pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
         let (id, open) = window::open(window::Settings {
             decorations: false,
             size: (1280.0, 48.0).into(),
@@ -35,7 +29,7 @@ impl<'a> Panel<'a> {
         log::debug!("Window requested open {:?}", id);
         (
             Self {
-                app_tray: AppTray::new(config.app_tray, compositor),
+                app_tray: AppTray::new(config.app_tray),
                 settings_tray: SettingsTray::new(),
                 main_window: id,
                 popup_window: None,

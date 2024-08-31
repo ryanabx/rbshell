@@ -12,7 +12,7 @@ readme = "README.md"
 freedesktop-desktop-entry = "0.7.0"
 freedesktop-icons = "0.2.6"
 iced = { git = "https://github.com/iced-rs/iced", branch = "master", features = [ "tiny-skia", "image", "svg", "fira-sans", "auto-detect-theme" ] }
-# iced = { git = "https://github.com/ryanabx/iced", branch = "iced-rbshell", features = [ "wayland", "tiny-skia", "image", "svg", "fira-sans", "auto-detect-theme", "multi-window" ] }
+# iced = { git = "https://github.com/ryanabx/iced", branch = "iced-rbshell", features = [ "wayland", "tiny-skia", "image", "svg", "fira-sans", "auto-detect-theme" ] }
 cctk = { git = "https://github.com/pop-os/cosmic-protocols", package = "cosmic-client-toolkit", rev = "c8d3a1c" }
 cosmic-protocols = { git = "https://github.com/pop-os/cosmic-protocols", default-features = false, features = [
     "client",
@@ -25,3 +25,6 @@ thiserror = "1.0.63"
 clap = { version = "4.5.16", features = ["derive"] }
 log = "0.4.22"
 env_logger = "0.11.5"
+wayland-client = "0.31.5"
+wayland-protocols-wlr = { version = "0.3.3", features = ["client"] }
+smithay-client-toolkit = "0.19.2"

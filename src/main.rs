@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use app_tray::compositor::Compositor;
 use clap::Parser;
 use config::{ConfigError, PanelConfig};
 use env_logger::Env;
@@ -25,10 +24,6 @@ mod settings_tray;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CliArgs {
-    /// Manually specify the assumed compositor to run under.
-    /// Defaults to XDG_CURRENT_DESKTOP
-    #[arg(long)]
-    compositor: Option<String>,
     /// Specify the configuration directory for the config file
     /// Defaults to ~/.config/rbshell/config.json
     #[arg(long)]
@@ -50,7 +45,6 @@ fn main() -> Result<(), PanelError> {
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
     let args = CliArgs::parse();
     log::trace!("Received args: {:?}", args);
-    let compositor = Compositor::new(&args.compositor.unwrap_or(compositor_default()));
     let config = PanelConfig::from_file_or_default(
         &args
             .config
@@ -62,7 +56,7 @@ fn main() -> Result<(), PanelError> {
         //     // .window_size((1280.0, 48.0))
         .theme(Panel::theme)
         // .decorations(false)
-        .run_with(|| Panel::new(config, compositor))
+        .run_with(|| Panel::new(config))
         .map_err(PanelError::Iced);
 
     res
