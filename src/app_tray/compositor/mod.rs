@@ -31,6 +31,9 @@ use wayland_client::{
     },
     Connection, Dispatch, Proxy, QueueHandle,
 };
+use wayland_protocols_plasma::plasma_window_management::client::{
+    org_kde_plasma_window, org_kde_plasma_window_management,
+};
 use wayland_protocols_wlr::foreign_toplevel::v1::client::{
     zwlr_foreign_toplevel_handle_v1::{self, ZwlrForeignToplevelHandleV1},
     zwlr_foreign_toplevel_manager_v1,
@@ -409,6 +412,34 @@ impl Dispatch<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, ()> for AppData {
     ]);
 }
 
+// KDE Window Management
+
+impl Dispatch<org_kde_plasma_window::OrgKdePlasmaWindow, ()> for AppData {
+    fn event(
+        state: &mut Self,
+        proxy: &org_kde_plasma_window::OrgKdePlasmaWindow,
+        event: <org_kde_plasma_window::OrgKdePlasmaWindow as Proxy>::Event,
+        data: &(),
+        conn: &Connection,
+        qhandle: &QueueHandle<Self>,
+    ) {
+        println!("{:?}", event);
+    }
+}
+
+impl Dispatch<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, ()> for AppData {
+    fn event(
+        state: &mut Self,
+        proxy: &org_kde_plasma_window_management::OrgKdePlasmaWindowManagement,
+        event: <org_kde_plasma_window_management::OrgKdePlasmaWindowManagement as Proxy>::Event,
+        data: &(),
+        conn: &Connection,
+        qhandle: &QueueHandle<Self>,
+    ) {
+        println!("{:?}", event);
+    }
+}
+
 // WL REGISTRY
 
 // You need to provide a Dispatch<WlRegistry, GlobalListContents> impl for your app
@@ -441,9 +472,37 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     // And get its handle to associate new objects to it
     let qh = event_queue.handle();
 
-    // now you can bind the globals you need for your app
-    let zwlr_toplevel_manager: zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1 =
-        globals.bind(&qh, 3..=3, ()).unwrap();
+    globals.contents().with_list(|list| {
+        for item in list {
+            log::info!("{} @ {}", item.interface, item.version);
+        }
+    });
+
+    // // now you can bind the globals you need for your app
+    // let zwlr_toplevel_manager = match
+    //     globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(&qh, 3..=3, ()) {
+    //         Ok(manager) => Some(manager),
+    //         Err(e) => {
+    //             log::warn!("Wlroots toplevel manager could not be bound: {}", e);
+    //             None
+    //         }
+    //     };
+
+    // let zcosmic_toplevel_manager = match globals.bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ()) {
+    //     Ok(manager) => Some(manager),
+    //         Err(e) => {
+    //             log::warn!("Cosmic toplevel info could not be bound: {}", e);
+    //             None
+    //         }
+    // };
+
+    // let kde_window_manager = match globals.bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(&qh, 15..=16, ()) {
+    //     Ok(manager) => Some(manager),
+    //         Err(e) => {
+    //             log::warn!("KDE window manager could not be bound: {}", e);
+    //             None
+    //         }
+    // };
 
     // let zwlr_toplevel_handle: zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1 =
     //     globals.bind(&qh, 3..=3, ()).unwrap();
@@ -635,11 +694,9 @@ impl CompositorBackend {
                     }
 
                     for (t_handle, t_info) in self.active_toplevels.get_mut(&info.app_id).unwrap() {
-                        if let c_handle = t_handle {
-                            if &handle == c_handle {
-                                *t_info = info;
-                                break;
-                            }
+                        if &handle == t_handle {
+                            *t_info = info;
+                            break;
                         }
                     }
 

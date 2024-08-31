@@ -260,9 +260,9 @@ impl<'a> AppTray<'a> {
     }
 
     pub fn subscription(&self) -> iced::Subscription<AppTrayMessage> {
-        iced::Subscription::batch(vec![self
-            .backend
-            .wayland_subscription()
-            .map(AppTrayMessage::WaylandIn)])
+        // self.backend
+        //     .wayland_subscription()
+        //     .map(AppTrayMessage::WaylandIn)
+        iced::Subscription::none()
     }
 }

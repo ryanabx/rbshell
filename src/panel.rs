@@ -22,7 +22,6 @@ pub struct Panel<'a> {
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
         let (id, open) = window::open(window::Settings {
-            decorations: false,
             size: (1280.0, 48.0).into(),
             ..Default::default()
         });
