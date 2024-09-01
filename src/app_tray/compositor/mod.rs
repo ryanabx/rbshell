@@ -478,31 +478,31 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
         }
     });
 
-    // // now you can bind the globals you need for your app
-    // let zwlr_toplevel_manager = match
-    //     globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(&qh, 3..=3, ()) {
-    //         Ok(manager) => Some(manager),
-    //         Err(e) => {
-    //             log::warn!("Wlroots toplevel manager could not be bound: {}", e);
-    //             None
-    //         }
-    //     };
+    // now you can bind the globals you need for your app
+    let zwlr_toplevel_manager = match
+        globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(&qh, 3..=3, ()) {
+            Ok(manager) => Some(manager),
+            Err(e) => {
+                log::warn!("Wlroots toplevel manager could not be bound: {}", e);
+                None
+            }
+        };
 
-    // let zcosmic_toplevel_manager = match globals.bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ()) {
-    //     Ok(manager) => Some(manager),
-    //         Err(e) => {
-    //             log::warn!("Cosmic toplevel info could not be bound: {}", e);
-    //             None
-    //         }
-    // };
+    let zcosmic_toplevel_manager = match globals.bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ()) {
+        Ok(manager) => Some(manager),
+            Err(e) => {
+                log::warn!("Cosmic toplevel info could not be bound: {}", e);
+                None
+            }
+    };
 
-    // let kde_window_manager = match globals.bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(&qh, 15..=16, ()) {
-    //     Ok(manager) => Some(manager),
-    //         Err(e) => {
-    //             log::warn!("KDE window manager could not be bound: {}", e);
-    //             None
-    //         }
-    // };
+    let kde_window_manager = match globals.bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(&qh, 15..=16, ()) {
+        Ok(manager) => Some(manager),
+            Err(e) => {
+                log::warn!("KDE window manager could not be bound: {}", e);
+                None
+            }
+    };
 
     // let zwlr_toplevel_handle: zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1 =
     //     globals.bind(&qh, 3..=3, ()).unwrap();
