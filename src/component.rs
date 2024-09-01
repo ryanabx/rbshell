@@ -1,3 +1,5 @@
+/// A simple component helper for iced
+/// Reminding you to have a `view`, a `handle_message`, and a `subscription`
 pub trait Component {
     type Message;
 

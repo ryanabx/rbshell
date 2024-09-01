@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use iced::{
     border::Radius,
     widget::{column, row, text},
@@ -7,12 +9,16 @@ use iced::{
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
+    component::Component,
     config::PanelConfig,
+    desktop_entry::DesktopEntryCache,
     settings_tray::{SettingsTray, SettingsTrayMessage},
+    start_menu::{StartMenu, StartMenuMessage},
 };
 
 #[derive(Clone, Debug)]
 pub struct Panel<'a> {
+    start_menu: StartMenu<'a>,
     app_tray: AppTray<'a>,
     settings_tray: SettingsTray,
     main_window: window::Id,
@@ -26,9 +32,11 @@ impl<'a> Panel<'a> {
             ..Default::default()
         });
         log::debug!("Window requested open {:?}", id);
+        let desktop_entry_cache = Rc::new(DesktopEntryCache::new());
         (
             Self {
-                app_tray: AppTray::new(config.app_tray),
+                start_menu: StartMenu::new(desktop_entry_cache.clone()),
+                app_tray: AppTray::new(config.app_tray, desktop_entry_cache.clone()),
                 settings_tray: SettingsTray::new(),
                 main_window: id,
                 popup_window: None,
@@ -43,6 +51,10 @@ impl<'a> Panel<'a> {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::StartMenu(start_menu_message) => self
+                .start_menu
+                .handle_message(start_menu_message)
+                .map(Message::StartMenu),
             Message::AppTray(AppTrayMessage::ContextMenu(app_id)) => {
                 let (_, task) = window::open(Settings {
                     position: window::Position::Centered,
@@ -80,6 +92,7 @@ impl<'a> Panel<'a> {
     pub fn view(&self, window: window::Id) -> Element<Message> {
         if window == self.main_window {
             let panel_items = row![
+                self.start_menu.view().map(Message::StartMenu),
                 self.app_tray.view().map(Message::AppTray),
                 self.settings_tray.view().map(Message::SettingsTray)
             ]
@@ -116,6 +129,7 @@ impl<'a> Panel<'a> {
 
 #[derive(Clone, Debug)]
 pub enum Message {
+    StartMenu(StartMenuMessage),
     AppTray(AppTrayMessage),
     SettingsTray(SettingsTrayMessage),
     OpenPopup(window::Id, String),
