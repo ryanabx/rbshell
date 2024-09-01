@@ -59,9 +59,9 @@ impl<'a> StartMenu<'a> {
         let mut background_color = theme.palette().primary;
         (border_color.a, background_color.a) =
             if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                (0.46, 0.36)
+                (0.80, 0.20)
             } else {
-                (0.36, 0.26)
+                (0.26, 0.10)
             };
 
         button::Style {
