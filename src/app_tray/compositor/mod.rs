@@ -486,52 +486,55 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
         .expect("Failed to insert wayland source.");
     if handle
         .insert_source(rx, |event, _, state| match event {
-            channel::Event::Msg(req) => match req {
-                WaylandRequest::Toplevel(req) => match req {
-                    WaylandToplevelRequest::Activate(handle) => {
-                        // if let Some(seat) = state.seat_state.seats().next() {
-                        //     let manager = &state.toplevel_manager_state.manager;
-                        //     manager.activate(&handle, &seat);
+            channel::Event::Msg(req) => {
+                log::trace!("WaylandRequest: {:?}", req);
+                match req {
+                    WaylandRequest::Toplevel(req) => match req {
+                        WaylandToplevelRequest::Activate(handle) => {
+                            // if let Some(seat) = state.seat_state.seats().next() {
+                            //     let manager = &state.toplevel_manager_state.manager;
+                            //     manager.activate(&handle, &seat);
+                            // }
+                        }
+                        WaylandToplevelRequest::Minimize(handle) => {
+                            // let manager = &state.toplevel_manager_state.manager;
+                            // manager.set_minimized(&handle);
+                        }
+                        WaylandToplevelRequest::Quit(handle) => {
+                            // let manager = &state.toplevel_manager_state.manager;
+                            // manager.close(&handle);
+                        }
+                    },
+                    WaylandRequest::TokenRequest {
+                        app_id,
+                        exec,
+                        gpu_idx,
+                    } => {
+                        // if let Some(activation_state) = state.activation_state.as_ref() {
+                        //     let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
+                        //     activation_state.request_token_with_data(
+                        //         &state.queue_handle,
+                        //         ExecRequestData {
+                        //             data: RequestData {
+                        //                 app_id: Some(app_id),
+                        //                 seat_and_serial,
+                        //                 surface: None,
+                        //             },
+                        //             exec,
+                        //             gpu_idx,
+                        //         },
+                        //     );
+                        // } else {
+                        //     // let _ = state.tx.unbounded_send(WaylandIncoming::ActivationToken {
+                        //     //     _token: None,
+                        //     //     _app_id: Some(app_id),
+                        //     //     _exec: exec,
+                        //     //     _gpu_idx: gpu_idx,
+                        //     // });
                         // }
                     }
-                    WaylandToplevelRequest::Minimize(handle) => {
-                        // let manager = &state.toplevel_manager_state.manager;
-                        // manager.set_minimized(&handle);
-                    }
-                    WaylandToplevelRequest::Quit(handle) => {
-                        // let manager = &state.toplevel_manager_state.manager;
-                        // manager.close(&handle);
-                    }
-                },
-                WaylandRequest::TokenRequest {
-                    app_id,
-                    exec,
-                    gpu_idx,
-                } => {
-                    // if let Some(activation_state) = state.activation_state.as_ref() {
-                    //     let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
-                    //     activation_state.request_token_with_data(
-                    //         &state.queue_handle,
-                    //         ExecRequestData {
-                    //             data: RequestData {
-                    //                 app_id: Some(app_id),
-                    //                 seat_and_serial,
-                    //                 surface: None,
-                    //             },
-                    //             exec,
-                    //             gpu_idx,
-                    //         },
-                    //     );
-                    // } else {
-                    //     // let _ = state.tx.unbounded_send(WaylandIncoming::ActivationToken {
-                    //     //     _token: None,
-                    //     //     _app_id: Some(app_id),
-                    //     //     _exec: exec,
-                    //     //     _gpu_idx: gpu_idx,
-                    //     // });
-                    // }
                 }
-            },
+            }
             channel::Event::Closed => {
                 state.exit = true;
             }
@@ -543,7 +546,7 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
 
     globals.contents().with_list(|list| {
         for item in list {
-            log::info!("{} @ {}", item.interface, item.version);
+            log::trace!("{} @ {}", item.interface, item.version);
         }
     });
 

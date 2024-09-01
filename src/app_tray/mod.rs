@@ -99,11 +99,11 @@ impl<'a> AppTray<'a> {
                     }),
             )
             .map(|(app_id, group)| {
-                let entry = &self.de_cache.0.get(&app_id);
+                let entry = &self.de_cache.fuzzy_match(&app_id);
 
                 self.view_tray_item(
                     &app_id,
-                    *entry,
+                    entry.as_ref(),
                     group,
                     active_window.as_ref().map(|f| f.clone()),
                 )
@@ -129,8 +129,8 @@ impl<'a> AppTray<'a> {
     ) -> iced::widget::MouseArea<'a, AppTrayMessage> {
         let is_active = active_window.is_some_and(|window| app_info.contains_key(&window));
         let num_toplevels = app_info.len();
-        let icon_path = desktop_entry
-            .and_then(|entry| entry.icon())
+        let icon_name = desktop_entry.and_then(|entry| entry.icon());
+        let icon_path = icon_name
             .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
             .or_else(|| Self::get_default_icon());
         iced::widget::mouse_area(
@@ -156,9 +156,17 @@ impl<'a> AppTray<'a> {
                         ])
                     }
                 }
-                None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-                    .width(Length::Fill)
-                    .height(Length::Fill),
+                None => {
+                    // log::trace!(
+                    //     "Icon for app_id {} does not exist {:?} {:?}",
+                    //     app_id,
+                    //     icon_name,
+                    //     desktop_entry
+                    // );
+                    iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                }
             }
             .width(Length::Fill)
             .height(Length::Fill)
