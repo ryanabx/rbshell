@@ -1,10 +1,10 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, rc::Rc};
 
+use super::desktop_entry::DesktopEntryCache;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
 };
-use desktop_entry::DesktopEntryCache;
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
     border::Radius,
@@ -13,14 +13,13 @@ use iced::{
     Background, Border, Element, Length, Task, Theme,
 };
 
-use crate::config::AppTrayConfig;
+use crate::{component::Component, config::AppTrayConfig};
 
 pub mod compositor;
-pub mod desktop_entry;
 
 #[derive(Clone, Debug)]
 pub struct AppTray<'a> {
-    pub de_cache: DesktopEntryCache<'a>,
+    de_cache: Rc<DesktopEntryCache<'a>>,
     backend: CompositorBackend,
     config: AppTrayConfig,
     context_menu: Option<Id>,
@@ -35,40 +34,10 @@ pub enum AppTrayMessage {
     ContextMenu(String),
 }
 
-impl<'a> AppTray<'a> {
-    pub fn new(config: AppTrayConfig) -> Self {
-        Self {
-            de_cache: DesktopEntryCache::new(),
-            backend: CompositorBackend::new(),
-            config,
-            context_menu: None,
-        }
-    }
+impl<'a> Component for AppTray<'a> {
+    type Message = AppTrayMessage;
 
-    pub fn handle_message(&mut self, app_tray_message: AppTrayMessage) -> Task<AppTrayMessage> {
-        match app_tray_message {
-            AppTrayMessage::WaylandIn(evt) => {
-                self.backend.handle_incoming(evt).unwrap_or(Task::none())
-            }
-            AppTrayMessage::WaylandOut(evt) => {
-                self.backend.handle_outgoing(evt).unwrap_or(Task::none())
-            }
-            AppTrayMessage::NewSeat(_) => {
-                log::trace!("New seat!");
-                Task::none()
-            }
-            AppTrayMessage::RemovedSeat(_) => {
-                log::trace!("Removed seat!");
-                Task::none()
-            }
-            AppTrayMessage::ContextMenu(app_id) => {
-                log::trace!("App id requested: {}", &app_id);
-                Task::none()
-            }
-        }
-    }
-
-    pub fn view(&self) -> iced::Element<AppTrayMessage> {
+    fn view(&self) -> iced::Element<Self::Message> {
         let active_window = self.backend.active_window();
         // Get app tray apps
         let app_tray_apps = self
@@ -118,6 +87,47 @@ impl<'a> AppTray<'a> {
                 )
             });
         iced::widget::row(app_tray_apps).into()
+    }
+
+    fn handle_message(&mut self, message: Self::Message) -> iced::Task<Self::Message> {
+        match message {
+            AppTrayMessage::WaylandIn(evt) => {
+                self.backend.handle_incoming(evt).unwrap_or(Task::none())
+            }
+            AppTrayMessage::WaylandOut(evt) => {
+                self.backend.handle_outgoing(evt).unwrap_or(Task::none())
+            }
+            AppTrayMessage::NewSeat(_) => {
+                log::trace!("New seat!");
+                Task::none()
+            }
+            AppTrayMessage::RemovedSeat(_) => {
+                log::trace!("Removed seat!");
+                Task::none()
+            }
+            AppTrayMessage::ContextMenu(app_id) => {
+                log::trace!("App id requested: {}", &app_id);
+                Task::none()
+            }
+        }
+    }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        self.backend
+            .wayland_subscription()
+            .map(AppTrayMessage::WaylandIn)
+        // iced::Subscription::none()
+    }
+}
+
+impl<'a> AppTray<'a> {
+    pub fn new(config: AppTrayConfig, de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
+        Self {
+            de_cache,
+            backend: CompositorBackend::new(),
+            config,
+            context_menu: None,
+        }
     }
 
     fn view_tray_item(
@@ -265,12 +275,5 @@ impl<'a> AppTray<'a> {
             },
             ..Default::default()
         }
-    }
-
-    pub fn subscription(&self) -> iced::Subscription<AppTrayMessage> {
-        self.backend
-            .wayland_subscription()
-            .map(AppTrayMessage::WaylandIn)
-        // iced::Subscription::none()
     }
 }

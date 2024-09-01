@@ -16,9 +16,12 @@ use env_logger::Env;
 use panel::Panel;
 
 pub mod app_tray;
+pub mod component;
 mod config;
+pub mod desktop_entry;
 mod panel;
 mod settings_tray;
+pub mod start_menu;
 
 /// ryanabx desktop shell for wayland desktops
 #[derive(Parser, Debug)]
