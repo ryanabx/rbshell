@@ -20,7 +20,13 @@ use iced::{
 use once_cell::sync::Lazy;
 use smithay_client_toolkit::{
     output::{OutputHandler, OutputInfo, OutputState},
-    reexports::calloop::channel::{self, Channel, Sender},
+    reexports::{
+        calloop::{
+            channel::{self, Channel, Sender},
+            EventLoop,
+        },
+        calloop_wayland_source::WaylandSource,
+    },
 };
 use wayland_client::{
     event_created_child,
@@ -42,6 +48,7 @@ use wayland_protocols_wlr::foreign_toplevel::v1::client::{
 use crate::app_tray::AppTrayMessage;
 
 struct AppData {
+    exit: bool,
     tx: UnboundedSender<WaylandIncoming>,
     output_state: OutputState,
     toplevel_state: ToplevelManager,
@@ -416,12 +423,12 @@ impl Dispatch<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, ()> for AppData {
 
 impl Dispatch<org_kde_plasma_window::OrgKdePlasmaWindow, ()> for AppData {
     fn event(
-        state: &mut Self,
-        proxy: &org_kde_plasma_window::OrgKdePlasmaWindow,
+        _state: &mut Self,
+        _proxy: &org_kde_plasma_window::OrgKdePlasmaWindow,
         event: <org_kde_plasma_window::OrgKdePlasmaWindow as Proxy>::Event,
-        data: &(),
-        conn: &Connection,
-        qhandle: &QueueHandle<Self>,
+        _data: &(),
+        _conn: &Connection,
+        _qhandle: &QueueHandle<Self>,
     ) {
         println!("{:?}", event);
     }
@@ -429,12 +436,12 @@ impl Dispatch<org_kde_plasma_window::OrgKdePlasmaWindow, ()> for AppData {
 
 impl Dispatch<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, ()> for AppData {
     fn event(
-        state: &mut Self,
-        proxy: &org_kde_plasma_window_management::OrgKdePlasmaWindowManagement,
+        _state: &mut Self,
+        _proxy: &org_kde_plasma_window_management::OrgKdePlasmaWindowManagement,
         event: <org_kde_plasma_window_management::OrgKdePlasmaWindowManagement as Proxy>::Event,
-        data: &(),
-        conn: &Connection,
-        qhandle: &QueueHandle<Self>,
+        _data: &(),
+        _conn: &Connection,
+        _qhandle: &QueueHandle<Self>,
     ) {
         println!("{:?}", event);
     }
@@ -458,7 +465,7 @@ impl wayland_client::Dispatch<wl_registry::WlRegistry, GlobalListContents> for A
     }
 }
 
-fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<WaylandOutgoing>) {
+fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<WaylandRequest>) {
     let conn = Connection::connect_to_env().unwrap();
 
     // Retrieve the WlDisplay Wayland object from the connection. This object is
@@ -469,8 +476,70 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     // Create an event queue for our event processing
 
     let (globals, mut event_queue) = registry_queue_init(&conn).unwrap();
-    // And get its handle to associate new objects to it
+
+    let mut event_loop = EventLoop::<AppData>::try_new().unwrap();
     let qh = event_queue.handle();
+    let wayland_source = WaylandSource::new(conn.clone(), event_queue);
+    let handle = event_loop.handle();
+    wayland_source
+        .insert(handle.clone())
+        .expect("Failed to insert wayland source.");
+    if handle
+        .insert_source(rx, |event, _, state| match event {
+            channel::Event::Msg(req) => match req {
+                WaylandRequest::Toplevel(req) => match req {
+                    WaylandToplevelRequest::Activate(handle) => {
+                        // if let Some(seat) = state.seat_state.seats().next() {
+                        //     let manager = &state.toplevel_manager_state.manager;
+                        //     manager.activate(&handle, &seat);
+                        // }
+                    }
+                    WaylandToplevelRequest::Minimize(handle) => {
+                        // let manager = &state.toplevel_manager_state.manager;
+                        // manager.set_minimized(&handle);
+                    }
+                    WaylandToplevelRequest::Quit(handle) => {
+                        // let manager = &state.toplevel_manager_state.manager;
+                        // manager.close(&handle);
+                    }
+                },
+                WaylandRequest::TokenRequest {
+                    app_id,
+                    exec,
+                    gpu_idx,
+                } => {
+                    // if let Some(activation_state) = state.activation_state.as_ref() {
+                    //     let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
+                    //     activation_state.request_token_with_data(
+                    //         &state.queue_handle,
+                    //         ExecRequestData {
+                    //             data: RequestData {
+                    //                 app_id: Some(app_id),
+                    //                 seat_and_serial,
+                    //                 surface: None,
+                    //             },
+                    //             exec,
+                    //             gpu_idx,
+                    //         },
+                    //     );
+                    // } else {
+                    //     // let _ = state.tx.unbounded_send(WaylandIncoming::ActivationToken {
+                    //     //     _token: None,
+                    //     //     _app_id: Some(app_id),
+                    //     //     _exec: exec,
+                    //     //     _gpu_idx: gpu_idx,
+                    //     // });
+                    // }
+                }
+            },
+            channel::Event::Closed => {
+                state.exit = true;
+            }
+        })
+        .is_err()
+    {
+        return;
+    }
 
     globals.contents().with_list(|list| {
         for item in list {
@@ -479,29 +548,40 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     });
 
     // now you can bind the globals you need for your app
-    let zwlr_toplevel_manager = match
-        globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(&qh, 3..=3, ()) {
-            Ok(manager) => Some(manager),
-            Err(e) => {
-                log::warn!("Wlroots toplevel manager could not be bound: {}", e);
-                None
-            }
-        };
-
-    let zcosmic_toplevel_manager = match globals.bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ()) {
+    let zwlr_toplevel_manager = match globals
+        .bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(
+        &qh,
+        3..=3,
+        (),
+    ) {
         Ok(manager) => Some(manager),
-            Err(e) => {
-                log::warn!("Cosmic toplevel info could not be bound: {}", e);
-                None
-            }
+        Err(e) => {
+            log::warn!("Wlroots toplevel manager could not be bound: {}", e);
+            None
+        }
     };
 
-    let kde_window_manager = match globals.bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(&qh, 15..=16, ()) {
+    let zcosmic_toplevel_manager = match globals
+        .bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ())
+    {
         Ok(manager) => Some(manager),
-            Err(e) => {
-                log::warn!("KDE window manager could not be bound: {}", e);
-                None
-            }
+        Err(e) => {
+            log::warn!("Cosmic toplevel info could not be bound: {}", e);
+            None
+        }
+    };
+
+    let kde_window_manager = match globals
+        .bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(
+        &qh,
+        15..=16,
+        (),
+    ) {
+        Ok(manager) => Some(manager),
+        Err(e) => {
+            log::warn!("KDE window manager could not be bound: {}", e);
+            None
+        }
     };
 
     // let zwlr_toplevel_handle: zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1 =
@@ -511,25 +591,18 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     // globals.bind(&qh, 3..=3, ()).unwrap();
 
     let mut app_data = AppData {
+        exit: false,
         tx,
         output_state: OutputState::new(&globals, &qh),
         toplevel_state: ToplevelManager::default(),
     };
 
-    // To actually receive the events, we invoke the `roundtrip` method. This method
-    // is special and you will generally only invoke it during the setup of your program:
-    // it will block until the server has received and processed all the messages you've
-    // sent up to now.
-    //
-    // In our case, that means it'll block until the server has received our
-    // wl_display.get_registry request, and as a reaction has sent us a batch of
-    // wl_registry.global events.
-    //
-    // `roundtrip` will then empty the internal buffer of the queue it has been invoked
-    // on, and thus invoke our `Dispatch` implementation that prints the list of advertised
-    // globals.
     loop {
-        event_queue.blocking_dispatch(&mut app_data).unwrap();
+        if app_data.exit {
+            log::debug!("Exiting wayland loop...");
+            break;
+        }
+        event_loop.dispatch(None, &mut app_data).unwrap();
     }
 }
 
@@ -537,7 +610,7 @@ smithay_client_toolkit::delegate_output!(AppData);
 
 #[derive(Clone, Debug)]
 pub enum WaylandIncoming {
-    Init(channel::Sender<WaylandOutgoing>),
+    Init(channel::Sender<WaylandRequest>),
     Finished,
     Toplevel(ToplevelUpdate),
     Output(OutputUpdate),
@@ -581,6 +654,24 @@ pub enum ToplevelRequest {
     Quit(ToplevelHandle),
 }
 
+#[derive(Clone, Debug)]
+pub enum WaylandRequest {
+    Toplevel(WaylandToplevelRequest),
+    TokenRequest {
+        app_id: String,
+        exec: String,
+        gpu_idx: Option<usize>,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum WaylandToplevelRequest {
+    Activate(ToplevelHandle),
+    Minimize(ToplevelHandle),
+    #[allow(unused)]
+    Quit(ToplevelHandle),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ToplevelHandle {
     Zwlr(ZwlrForeignToplevelHandleV1),
@@ -589,7 +680,7 @@ pub enum ToplevelHandle {
 
 #[derive(Debug, Clone)]
 pub struct CompositorBackend {
-    wayland_sender: Option<Sender<WaylandOutgoing>>,
+    wayland_sender: Option<Sender<WaylandRequest>>,
     // active_workspaces: Vec<ZcosmicWorkspaceHandleV1>,
     pub active_toplevels: HashMap<String, HashMap<ToplevelHandle, CompositorToplevelInfo>>,
     output_list: HashMap<WlOutput, OutputInfo>,
@@ -661,7 +752,44 @@ impl CompositorBackend {
     }
 
     pub fn handle_outgoing(&mut self, outgoing: WaylandOutgoing) -> Option<Task<AppTrayMessage>> {
-        Some(Task::none())
+        match outgoing {
+            WaylandOutgoing::Exec(app_id, exec) => {
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    let _ = tx.send(WaylandRequest::TokenRequest {
+                        app_id,
+                        exec,
+                        gpu_idx: None,
+                    });
+                }
+                None
+            }
+            WaylandOutgoing::Toggle(window) => {
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    let _ = tx.send(WaylandRequest::Toplevel(
+                        if self.active_window().is_some() {
+                            WaylandToplevelRequest::Minimize(window)
+                        } else {
+                            WaylandToplevelRequest::Activate(window)
+                        },
+                    ));
+                }
+                // if let Some(p) = self.popup.take() {
+                //     return destroy_popup(p.id);
+                // }
+                None
+            }
+            WaylandOutgoing::Activate(window) => {
+                if let Some(tx) = self.wayland_sender.as_ref() {
+                    let _ = tx.send(WaylandRequest::Toplevel(WaylandToplevelRequest::Activate(
+                        window,
+                    )));
+                }
+                // if let Some(p) = self.popup.take() {
+                //     return destroy_popup(p.id);
+                // }
+                None
+            }
+        }
     }
 
     pub fn handle_incoming(&mut self, incoming: WaylandIncoming) -> Option<Task<AppTrayMessage>> {
