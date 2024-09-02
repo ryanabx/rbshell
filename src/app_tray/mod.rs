@@ -13,7 +13,7 @@ use iced::{
     Background, Border, Element, Length, Task, Theme,
 };
 
-use crate::{component::Component, config::AppTrayConfig};
+use crate::config::AppTrayConfig;
 
 pub mod compositor;
 
@@ -34,10 +34,17 @@ pub enum AppTrayMessage {
     ContextMenu(String),
 }
 
-impl<'a> Component for AppTray<'a> {
-    type Message = AppTrayMessage;
+impl<'a> AppTray<'a> {
+    pub fn new(config: AppTrayConfig, de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
+        Self {
+            de_cache,
+            backend: CompositorBackend::new(),
+            config,
+            context_menu: None,
+        }
+    }
 
-    fn view(&self) -> iced::Element<Self::Message> {
+    pub fn view(&self) -> iced::Element<AppTrayMessage> {
         let active_window = self.backend.active_window();
         // Get app tray apps
         let app_tray_apps = self
@@ -89,7 +96,7 @@ impl<'a> Component for AppTray<'a> {
         iced::widget::row(app_tray_apps).into()
     }
 
-    fn handle_message(&mut self, message: Self::Message) -> iced::Task<Self::Message> {
+    pub fn handle_message(&mut self, message: AppTrayMessage) -> iced::Task<AppTrayMessage> {
         match message {
             AppTrayMessage::WaylandIn(evt) => {
                 self.backend.handle_incoming(evt).unwrap_or(Task::none())
@@ -105,29 +112,15 @@ impl<'a> Component for AppTray<'a> {
                 log::trace!("Removed seat!");
                 Task::none()
             }
-            AppTrayMessage::ContextMenu(app_id) => {
-                log::trace!("App id requested: {}", &app_id);
-                Task::none()
-            }
+            AppTrayMessage::ContextMenu(_) => unreachable!(),
         }
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
+    pub fn subscription(&self) -> iced::Subscription<AppTrayMessage> {
         self.backend
             .wayland_subscription()
             .map(AppTrayMessage::WaylandIn)
         // iced::Subscription::none()
-    }
-}
-
-impl<'a> AppTray<'a> {
-    pub fn new(config: AppTrayConfig, de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
-        Self {
-            de_cache,
-            backend: CompositorBackend::new(),
-            config,
-            context_menu: None,
-        }
     }
 
     fn view_tray_item(
@@ -142,41 +135,17 @@ impl<'a> AppTray<'a> {
         let icon_name = desktop_entry.and_then(|entry| entry.icon());
         let icon_path = icon_name
             .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
-            .or_else(|| Self::get_default_icon());
+            .or_else(|| get_default_icon());
         iced::widget::mouse_area(
             match icon_path {
-                Some(path) => {
-                    if path.extension().is_some_and(|x| x == "svg") {
-                        iced::widget::button(column![
-                            Self::get_horizontal_rule(is_active, num_toplevels, true),
-                            iced::widget::svg(path)
-                                .content_fit(iced::ContentFit::Contain)
-                                .width(Length::Fill)
-                                .height(Length::Fill),
-                            Self::get_horizontal_rule(is_active, num_toplevels, false)
-                        ])
-                    } else {
-                        iced::widget::button(column![
-                            Self::get_horizontal_rule(is_active, num_toplevels, true),
-                            iced::widget::image(path)
-                                .content_fit(iced::ContentFit::Contain)
-                                .width(Length::Fill)
-                                .height(Length::Fill),
-                            Self::get_horizontal_rule(is_active, num_toplevels, false)
-                        ])
-                    }
-                }
-                None => {
-                    // log::trace!(
-                    //     "Icon for app_id {} does not exist {:?} {:?}",
-                    //     app_id,
-                    //     icon_name,
-                    //     desktop_entry
-                    // );
-                    iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-                        .width(Length::Fill)
-                        .height(Length::Fill)
-                }
+                Some(path) => iced::widget::button(column![
+                    get_horizontal_rule(is_active, num_toplevels, true),
+                    crate::components::app_icon(&path),
+                    get_horizontal_rule(is_active, num_toplevels, false)
+                ]),
+                None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
+                    .width(Length::Fill)
+                    .height(Length::Fill),
             }
             .width(Length::Fill)
             .height(Length::Fill)
@@ -196,9 +165,7 @@ impl<'a> AppTray<'a> {
                 None
                 // TODO
             })
-            .style(move |theme, status| {
-                Self::tray_button_style(theme, status, is_active, num_toplevels)
-            }),
+            .style(move |theme, status| tray_button_style(theme, status, is_active, num_toplevels)),
         )
         .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string()))
         // .on_press_maybe(if toplevels.is_empty() {
@@ -209,71 +176,69 @@ impl<'a> AppTray<'a> {
         //     Some(Message::TopLevelListPopup((*id).into(), window_id))
         // })
     }
+}
 
-    fn get_horizontal_rule(
-        is_active: bool,
-        num_toplevels: usize,
-        force_transparent: bool,
-    ) -> Container<'a, AppTrayMessage> {
-        let transparent = force_transparent || num_toplevels == 0;
-        iced::widget::container(
-            iced::widget::horizontal_rule(1).style(move |theme: &Theme| {
-                iced::widget::rule::Style {
-                    color: if transparent {
-                        iced::Color::TRANSPARENT
-                    } else {
-                        theme.palette().primary
-                    },
-                    width: (2.0) as u16,
-                    radius: 4.into(),
-                    fill_mode: iced::widget::rule::FillMode::Full,
-                }
-            }),
-        )
-        .width(Length::Fixed(if is_active { 12.0 } else { 6.0 }))
-        .center_x(Length::Fill)
-    }
-
-    fn get_default_icon() -> Option<PathBuf> {
-        freedesktop_icons::lookup("wayland").with_cache().find()
-    }
-
-    fn tray_button_style(
-        theme: &Theme,
-        status: button::Status,
-        is_active: bool,
-        num_toplevels: usize,
-    ) -> button::Style {
-        let mut border_color = theme.palette().primary;
-        let mut background_color = theme.palette().primary;
-        (border_color.a, background_color.a) = if num_toplevels == 0 {
-            if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                (0.11, 0.1)
+fn get_horizontal_rule<'a>(
+    is_active: bool,
+    num_toplevels: usize,
+    force_transparent: bool,
+) -> Container<'a, AppTrayMessage> {
+    let transparent = force_transparent || num_toplevels == 0;
+    iced::widget::container(
+        iced::widget::horizontal_rule(1).style(move |theme: &Theme| iced::widget::rule::Style {
+            color: if transparent {
+                iced::Color::TRANSPARENT
             } else {
-                (0.0, 0.0)
-            }
-        } else if is_active {
-            if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                (0.26, 0.25)
-            } else {
-                (0.21, 0.20)
-            }
-        } else {
-            if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                (0.11, 0.1)
-            } else {
-                (0.06, 0.05)
-            }
-        };
-
-        button::Style {
-            background: Some(Background::Color(background_color)),
-            border: Border {
-                radius: Radius::from(8.0),
-                color: border_color,
-                width: 1.0,
+                theme.palette().primary
             },
-            ..Default::default()
+            width: (2.0) as u16,
+            radius: 4.into(),
+            fill_mode: iced::widget::rule::FillMode::Full,
+        }),
+    )
+    .width(Length::Fixed(if is_active { 12.0 } else { 6.0 }))
+    .center_x(Length::Fill)
+}
+
+fn get_default_icon() -> Option<PathBuf> {
+    freedesktop_icons::lookup("wayland").with_cache().find()
+}
+
+fn tray_button_style(
+    theme: &Theme,
+    status: button::Status,
+    is_active: bool,
+    num_toplevels: usize,
+) -> button::Style {
+    let mut border_color = theme.palette().primary;
+    let mut background_color = theme.palette().primary;
+    (border_color.a, background_color.a) = if num_toplevels == 0 {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.11, 0.1)
+        } else {
+            (0.0, 0.0)
         }
+    } else if is_active {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.26, 0.25)
+        } else {
+            (0.21, 0.20)
+        }
+    } else {
+        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+            (0.11, 0.1)
+        } else {
+            (0.06, 0.05)
+        }
+    };
+
+    button::Style {
+        background: Some(Background::Color(background_color)),
+        border: Border {
+            radius: Radius::from(8.0),
+            color: border_color,
+            width: 1.0,
+        },
+        ..Default::default()
     }
 }

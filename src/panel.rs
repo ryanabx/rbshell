@@ -9,7 +9,6 @@ use iced::{
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
-    component::Component,
     config::PanelConfig,
     desktop_entry::DesktopEntryCache,
     settings_tray::{SettingsTray, SettingsTrayMessage},
@@ -22,7 +21,13 @@ pub struct Panel<'a> {
     app_tray: AppTray<'a>,
     settings_tray: SettingsTray,
     main_window: window::Id,
-    popup_window: Option<(window::Id, String)>,
+    popup_window: Option<(window::Id, PopupType)>,
+}
+
+#[derive(Clone, Debug)]
+pub enum PopupType {
+    AppTrayContextMenu { app_id: String },
+    StartMenu,
 }
 
 impl<'a> Panel<'a> {
@@ -51,6 +56,14 @@ impl<'a> Panel<'a> {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::StartMenu(StartMenuMessage::MenuToggle) => {
+                log::warn!("Start menu toggle!!");
+                let (_, task) = window::open(Settings {
+                    position: window::Position::Centered,
+                    ..Default::default()
+                });
+                task.map(move |i| Message::OpenPopup(i, PopupType::StartMenu))
+            }
             Message::StartMenu(start_menu_message) => self
                 .start_menu
                 .handle_message(start_menu_message)
@@ -60,8 +73,14 @@ impl<'a> Panel<'a> {
                     position: window::Position::Centered,
                     ..Default::default()
                 });
-
-                task.map(move |i| Message::OpenPopup(i, app_id.clone()))
+                task.map(move |i| {
+                    Message::OpenPopup(
+                        i,
+                        PopupType::AppTrayContextMenu {
+                            app_id: app_id.clone(),
+                        },
+                    )
+                })
             }
             Message::AppTray(app_tray_msg) => self
                 .app_tray
@@ -71,14 +90,14 @@ impl<'a> Panel<'a> {
                 .settings_tray
                 .handle_message(settings_tray_msg)
                 .map(Message::SettingsTray),
-            Message::OpenPopup(id, app_id) => {
+            Message::OpenPopup(id, popup_info) => {
                 let task = if let Some((popup, _)) = self.popup_window.take() {
                     iced::window::close(popup)
                 } else {
                     Task::none()
                 };
                 log::debug!("Popup opened! {:?}", id);
-                self.popup_window = Some((id, app_id));
+                self.popup_window = Some((id, popup_info));
                 task
             }
             Message::OpenMainWindow(_) => Task::none(),
@@ -115,7 +134,14 @@ impl<'a> Panel<'a> {
             .height(Length::Fill)
             .into()
         } else {
-            text!("Hey").into()
+            if let Some(popup_window) = &self.popup_window.as_ref() {
+                match &popup_window.1 {
+                    PopupType::AppTrayContextMenu { app_id } => text!("Hey").into(),
+                    PopupType::StartMenu => self.start_menu.view_popup().map(Message::StartMenu),
+                }
+            } else {
+                iced::widget::horizontal_space().into()
+            }
         }
     }
 
@@ -132,6 +158,6 @@ pub enum Message {
     StartMenu(StartMenuMessage),
     AppTray(AppTrayMessage),
     SettingsTray(SettingsTrayMessage),
-    OpenPopup(window::Id, String),
+    OpenPopup(window::Id, PopupType),
     OpenMainWindow(window::Id),
 }

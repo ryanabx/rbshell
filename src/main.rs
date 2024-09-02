@@ -16,7 +16,7 @@ use env_logger::Env;
 use panel::Panel;
 
 pub mod app_tray;
-pub mod component;
+pub mod components;
 mod config;
 pub mod desktop_entry;
 mod panel;
@@ -63,14 +63,4 @@ fn main() -> Result<(), PanelError> {
         .map_err(PanelError::Iced);
 
     res
-}
-
-fn compositor_default() -> String {
-    let current_compositor = env::var("XDG_CURRENT_DESKTOP");
-    match current_compositor.as_deref() {
-        Ok(val) => val.to_string(),
-        _ => panic!(
-            "Unsupported desktop. Specify a compositor with the argument `--compositor <COMPOSITOR>` for example, `--compositor COSMIC`"
-        ),
-    }
 }

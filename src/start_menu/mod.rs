@@ -1,17 +1,19 @@
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
+use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry, Locale};
 use iced::{
     alignment::{Horizontal, Vertical},
     border::Radius,
-    widget::{button, text},
-    Background, Border, Length, Theme,
+    widget::{button, row, scrollable::{Direction, Scrollbar}, text},
+    Background, Border, Element, Length, Task, Theme,
 };
 
-use crate::{component::Component, desktop_entry::DesktopEntryCache};
+use crate::{components::app_icon, desktop_entry::DesktopEntryCache};
 
 #[derive(Clone, Debug)]
 pub enum StartMenuMessage {
     MenuToggle,
+    Launch(String),
 }
 
 #[derive(Clone, Debug)]
@@ -23,18 +25,14 @@ impl<'a> StartMenu<'a> {
     pub fn new(de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
         Self { de_cache }
     }
-}
 
-impl<'a> Component for StartMenu<'a> {
-    type Message = StartMenuMessage;
-
-    fn view(&self) -> iced::Element<Self::Message> {
+    pub fn view(&self) -> iced::Element<StartMenuMessage> {
         iced::widget::container(
             iced::widget::button(iced::widget::horizontal_space())
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .style(Self::tray_button_style)
-                .on_press(Self::Message::MenuToggle),
+                .on_press(StartMenuMessage::MenuToggle),
         )
         .width(48)
         .height(48)
@@ -42,18 +40,20 @@ impl<'a> Component for StartMenu<'a> {
         .into()
     }
 
-    fn handle_message(&mut self, message: Self::Message) -> iced::Task<Self::Message> {
+    pub fn handle_message(&mut self, message: StartMenuMessage) -> Task<StartMenuMessage> {
         match message {
-            StartMenuMessage::MenuToggle => todo!(),
+            StartMenuMessage::MenuToggle => unreachable!(),
+            StartMenuMessage::Launch(app_id) => {
+                log::info!("Requested to launch {}", app_id);
+                Task::none() // TODO: Actually handle this
+            }
         }
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
+    pub fn subscription(&self) -> iced::Subscription<StartMenuMessage> {
         todo!()
     }
-}
 
-impl<'a> StartMenu<'a> {
     fn tray_button_style(theme: &Theme, status: button::Status) -> button::Style {
         let mut border_color = theme.palette().primary;
         let mut background_color = theme.palette().primary;
@@ -74,4 +74,35 @@ impl<'a> StartMenu<'a> {
             ..Default::default()
         }
     }
+
+    pub fn view_popup(&self) -> iced::Element<StartMenuMessage> {
+        iced::widget::scrollable(
+            iced::widget::column(self.de_cache.0.values().map(view_menu_item))
+                .height(Length::Shrink)
+                .width(Length::Fill),
+        ).direction(Direction::Vertical(Scrollbar::new()))
+        .height(Length::Fill)
+        .width(Length::Fill)
+        .into()
+    }
+}
+
+fn view_menu_item<'a>(desktop_entry: &DesktopEntry<'a>) -> iced::Element<'a, StartMenuMessage> {
+    let icon_path = desktop_entry.icon();
+    row![
+        match icon_path {
+            Some(path) => {
+                app_icon(Path::new(path))
+            }
+            None => Element::from(iced::widget::horizontal_space()),
+        },
+        text!(
+            "{}",
+            desktop_entry
+                .name(&get_languages_from_env())
+                .unwrap_or("".into())
+        ),
+        text!("{}", desktop_entry.appid)
+    ]
+    .into()
 }
