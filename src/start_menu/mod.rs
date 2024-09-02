@@ -4,7 +4,11 @@ use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry, Locale};
 use iced::{
     alignment::{Horizontal, Vertical},
     border::Radius,
-    widget::{button, row, scrollable::{Direction, Scrollbar}, text},
+    widget::{
+        button, row,
+        scrollable::{Direction, Scrollbar},
+        text,
+    },
     Background, Border, Element, Length, Task, Theme,
 };
 
@@ -77,32 +81,46 @@ impl<'a> StartMenu<'a> {
 
     pub fn view_popup(&self) -> iced::Element<StartMenuMessage> {
         iced::widget::scrollable(
-            iced::widget::column(self.de_cache.0.values().map(view_menu_item))
+            iced::widget::column(self.de_cache.0.values().filter_map(view_menu_item))
                 .height(Length::Shrink)
-                .width(Length::Fill),
-        ).direction(Direction::Vertical(Scrollbar::new()))
+                .width(Length::Fill)
+                .spacing(10),
+        )
+        .direction(Direction::Vertical(Scrollbar::new()))
         .height(Length::Fill)
         .width(Length::Fill)
         .into()
     }
 }
 
-fn view_menu_item<'a>(desktop_entry: &DesktopEntry<'a>) -> iced::Element<'a, StartMenuMessage> {
+fn view_menu_item<'a>(
+    desktop_entry: &DesktopEntry<'a>,
+) -> Option<iced::Element<'a, StartMenuMessage>> {
+    if desktop_entry.no_display()
+        || desktop_entry.name(&get_languages_from_env()).is_none()
+        || desktop_entry.terminal()
+        || desktop_entry.exec().is_none()
+    {
+        return None;
+    }
     let icon_path = desktop_entry.icon();
-    row![
-        match icon_path {
-            Some(path) => {
-                app_icon(Path::new(path))
-            }
-            None => Element::from(iced::widget::horizontal_space()),
-        },
-        text!(
-            "{}",
-            desktop_entry
-                .name(&get_languages_from_env())
-                .unwrap_or("".into())
-        ),
-        text!("{}", desktop_entry.appid)
-    ]
-    .into()
+    Some(
+        iced::widget::button(row![
+            iced::widget::container(iced::widget::column![match icon_path {
+                Some(path) => {
+                    app_icon(Path::new(path))
+                }
+                None => {
+                    // log::warn!("No icon for {}", desktop_entry.appid);
+                    Element::from(iced::widget::horizontal_space())
+                }
+            }])
+            .width(32)
+            .height(32),
+            text!("{}", desktop_entry.name(&get_languages_from_env()).unwrap()),
+        ])
+        .on_press(StartMenuMessage::Launch(desktop_entry.appid.to_string()))
+        .width(Length::Fill)
+        .into(),
+    )
 }
