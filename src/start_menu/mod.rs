@@ -1,8 +1,7 @@
 use std::{path::Path, rc::Rc};
 
-use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry, Locale};
+use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry};
 use iced::{
-    alignment::{Horizontal, Vertical},
     border::Radius,
     widget::{
         button, row,

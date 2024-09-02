@@ -133,15 +133,13 @@ impl<'a> Panel<'a> {
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
-        } else {
-            if let Some(popup_window) = &self.popup_window.as_ref() {
-                match &popup_window.1 {
-                    PopupType::AppTrayContextMenu { app_id } => text!("Hey").into(),
-                    PopupType::StartMenu => self.start_menu.view_popup().map(Message::StartMenu),
-                }
-            } else {
-                iced::widget::horizontal_space().into()
+        } else if let Some(popup_window) = &self.popup_window.as_ref() {
+            match &popup_window.1 {
+                PopupType::AppTrayContextMenu { app_id } => text!("Hey").into(),
+                PopupType::StartMenu => self.start_menu.view_popup().map(Message::StartMenu),
             }
+        } else {
+            iced::widget::horizontal_space().into()
         }
     }
 

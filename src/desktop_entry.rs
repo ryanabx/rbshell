@@ -7,6 +7,12 @@ use freedesktop_desktop_entry::{
 #[derive(Clone, Debug)]
 pub struct DesktopEntryCache<'a>(pub HashMap<String, DesktopEntry<'a>>);
 
+impl<'a> Default for DesktopEntryCache<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> DesktopEntryCache<'a> {
     pub fn new() -> Self {
         let locales = get_languages_from_env();

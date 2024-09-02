@@ -55,7 +55,7 @@ impl Clock {
                     let now = Local::now();
                     let formatted_time = now.format("%I:%M %p").to_string();
                     let formatted_date = now.format("%Y-%m-%d").to_string();
-                    let _ = output
+                    output
                         .send(ClockMessage::UpdateClock(formatted_time, formatted_date))
                         .await
                         .unwrap();

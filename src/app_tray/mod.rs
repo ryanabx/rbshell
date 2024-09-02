@@ -77,12 +77,7 @@ impl<'a> AppTray<'a> {
             .map(|(app_id, group)| {
                 let entry = &self.de_cache.fuzzy_match(&app_id);
 
-                self.view_tray_item(
-                    &app_id,
-                    entry.as_ref(),
-                    group,
-                    active_window.as_ref().map(|f| f.clone()),
-                )
+                self.view_tray_item(&app_id, entry.as_ref(), group, active_window.clone())
             })
             .map(|x| {
                 Element::from(
@@ -135,7 +130,7 @@ impl<'a> AppTray<'a> {
         let icon_name = desktop_entry.and_then(|entry| entry.icon());
         let icon_path = icon_name
             .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
-            .or_else(|| get_default_icon());
+            .or_else(get_default_icon);
         iced::widget::mouse_area(
             match icon_path {
                 Some(path) => iced::widget::button(column![
@@ -224,12 +219,10 @@ fn tray_button_style(
         } else {
             (0.21, 0.20)
         }
+    } else if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+        (0.11, 0.1)
     } else {
-        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-            (0.11, 0.1)
-        } else {
-            (0.06, 0.05)
-        }
+        (0.06, 0.05)
     };
 
     button::Style {

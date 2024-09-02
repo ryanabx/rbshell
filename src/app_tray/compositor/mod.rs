@@ -260,11 +260,9 @@ impl From<zwlr_foreign_toplevel_handle_v1::Event> for ToplevelHandleEvent {
             zwlr_foreign_toplevel_handle_v1::Event::State { state } => {
                 let mut r_state = HashSet::new();
                 for value in state.chunks_exact(4) {
-                    if let Some(state) = zwlr_foreign_toplevel_handle_v1::State::try_from(
+                    if let Ok(state) = zwlr_foreign_toplevel_handle_v1::State::try_from(
                         u32::from_ne_bytes(value[0..4].try_into().unwrap()),
-                    )
-                    .ok()
-                    {
+                    ) {
                         r_state.insert(ToplevelState::from(state));
                     }
                 }
@@ -300,11 +298,9 @@ impl From<zcosmic_toplevel_handle_v1::Event> for ToplevelHandleEvent {
             zcosmic_toplevel_handle_v1::Event::State { state } => {
                 let mut r_state = HashSet::new();
                 for value in state.chunks_exact(4) {
-                    if let Some(state) = zcosmic_toplevel_handle_v1::State::try_from(
+                    if let Ok(state) = zcosmic_toplevel_handle_v1::State::try_from(
                         u32::from_ne_bytes(value[0..4].try_into().unwrap()),
-                    )
-                    .ok()
-                    {
+                    ) {
                         r_state.insert(ToplevelState::from(state));
                     }
                 }
@@ -475,7 +471,7 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
 
     // Create an event queue for our event processing
 
-    let (globals, mut event_queue) = registry_queue_init(&conn).unwrap();
+    let (globals, event_queue) = registry_queue_init(&conn).unwrap();
 
     let mut event_loop = EventLoop::<AppData>::try_new().unwrap();
     let qh = event_queue.handle();
@@ -732,6 +728,12 @@ async fn start_listening(
     }
 }
 
+impl Default for CompositorBackend {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CompositorBackend {
     pub fn new() -> Self {
         Self {
@@ -891,6 +893,6 @@ impl CompositorBackend {
                 }
             }
         }
-        focused_toplevels.first().map(|f| f.clone())
+        focused_toplevels.first().cloned()
     }
 }

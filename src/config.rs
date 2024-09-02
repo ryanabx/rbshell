@@ -14,17 +14,9 @@ pub enum ConfigError {
     Serde(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PanelConfig {
     pub app_tray: AppTrayConfig,
-}
-
-impl<'a> Default for PanelConfig {
-    fn default() -> Self {
-        Self {
-            app_tray: AppTrayConfig::default(),
-        }
-    }
 }
 
 impl PanelConfig {
