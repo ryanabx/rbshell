@@ -16,11 +16,11 @@ jobs:
     - name: Set up Cargo
       run: sudo apt-get install cargo
 
-    - name: Install djot-ssg
-      run: cargo install djot-ssg
+    - name: Install simple-ssg
+      run: cargo install simple-ssg
 
     - name: Generate static site
-      run: ~/.cargo/bin/djot-ssg --clean ./docs -o ./output
+      run: ~/.cargo/bin/simple-ssg --clean ./docs -o ./output
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
