@@ -20,7 +20,7 @@ jobs:
       run: cargo install simple-ssg
 
     - name: Generate static site
-      run: ~/.cargo/bin/simple-ssg --clean ./docs -o ./output
+      run: ~/.cargo/bin/simple-ssg -t github-markdown --clean ./docs -o ./output
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
