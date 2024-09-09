@@ -11,7 +11,9 @@ use iced::{
     Background, Border, Element, Length, Task, Theme,
 };
 
-use crate::{components::app_icon, desktop_entry::DesktopEntryCache};
+use crate::{
+    component_theme::button_style, components::app_icon, desktop_entry::DesktopEntryCache,
+};
 
 #[derive(Clone, Debug)]
 pub enum StartMenuMessage {
@@ -102,22 +104,25 @@ fn view_menu_item<'a>(
     {
         return None;
     }
-    let icon_path = desktop_entry.icon();
+    let icon_path = desktop_entry
+        .icon()
+        .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find());
     Some(
         iced::widget::button(row![
-            iced::widget::container(iced::widget::column![match icon_path {
+            iced::widget::container(match icon_path {
                 Some(path) => {
-                    app_icon(Path::new(path))
+                    app_icon(&path)
                 }
                 None => {
                     // log::warn!("No icon for {}", desktop_entry.appid);
                     Element::from(iced::widget::horizontal_space())
                 }
-            }])
+            })
             .width(32)
             .height(32),
             text!("{}", desktop_entry.name(&get_languages_from_env()).unwrap()),
         ])
+        .style(|theme, status| button_style(theme, status, false, 0))
         .on_press(StartMenuMessage::Launch(desktop_entry.appid.to_string()))
         .width(Length::Fill)
         .into(),

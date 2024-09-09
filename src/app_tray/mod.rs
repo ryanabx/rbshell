@@ -13,7 +13,7 @@ use iced::{
     Background, Border, Element, Length, Task, Theme,
 };
 
-use crate::config::AppTrayConfig;
+use crate::{component_theme::button_style, config::AppTrayConfig};
 
 pub mod compositor;
 
@@ -160,7 +160,7 @@ impl<'a> AppTray<'a> {
                 None
                 // TODO
             })
-            .style(move |theme, status| tray_button_style(theme, status, is_active, num_toplevels)),
+            .style(move |theme, status| button_style(theme, status, is_active, num_toplevels)),
         )
         .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string()))
         // .on_press_maybe(if toplevels.is_empty() {
@@ -197,41 +197,4 @@ fn get_horizontal_rule<'a>(
 
 fn get_default_icon() -> Option<PathBuf> {
     freedesktop_icons::lookup("wayland").with_cache().find()
-}
-
-fn tray_button_style(
-    theme: &Theme,
-    status: button::Status,
-    is_active: bool,
-    num_toplevels: usize,
-) -> button::Style {
-    let mut border_color = theme.palette().primary;
-    let mut background_color = theme.palette().primary;
-    (border_color.a, background_color.a) = if num_toplevels == 0 {
-        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-            (0.11, 0.1)
-        } else {
-            (0.0, 0.0)
-        }
-    } else if is_active {
-        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-            (0.26, 0.25)
-        } else {
-            (0.21, 0.20)
-        }
-    } else if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-        (0.11, 0.1)
-    } else {
-        (0.06, 0.05)
-    };
-
-    button::Style {
-        background: Some(Background::Color(background_color)),
-        border: Border {
-            radius: Radius::from(8.0),
-            color: border_color,
-            width: 1.0,
-        },
-        ..Default::default()
-    }
 }

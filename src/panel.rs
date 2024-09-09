@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use iced::{
     border::Radius,
-    widget::{column, row, text},
+    widget::{button, column, row, text},
     window::{self, Settings},
-    Element, Length, Padding, Subscription, Task, Theme,
+    Background, Border, Element, Length, Padding, Subscription, Task, Theme,
 };
 
 use crate::{
@@ -105,7 +105,7 @@ impl<'a> Panel<'a> {
     }
 
     pub fn theme(&self, _window: window::Id) -> Theme {
-        Theme::CatppuccinMocha
+        Theme::Dark
     }
 
     pub fn view(&self, window: window::Id) -> Element<Message> {

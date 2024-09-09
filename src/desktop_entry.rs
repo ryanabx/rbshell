@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use freedesktop_desktop_entry::{
-    default_paths, get_languages_from_env, DesktopEntry, Iter, Locale,
+    default_paths, get_languages_from_env, DesktopEntry, Iter, Locale, PathSource,
 };
 
 #[derive(Clone, Debug)]
@@ -16,13 +16,17 @@ impl<'a> Default for DesktopEntryCache<'a> {
 impl<'a> DesktopEntryCache<'a> {
     pub fn new() -> Self {
         let locales = get_languages_from_env();
-        let mut entries = HashMap::<String, DesktopEntry<'a>>::new();
-        for path in Iter::new(default_paths()) {
-            if let Ok(entry) = DesktopEntry::from_path(path, Some(&locales)) {
-                entries.insert(entry.appid.to_string(), entry);
-            }
-        }
-        log::trace!("Entries: {:?}", entries.keys().collect::<Vec<_>>());
+        log::debug!("{:?}", default_paths());
+        let entries = Iter::new(default_paths())
+            .filter_map(|path| {
+                let path_src = PathSource::guess_from(&path);
+                if let Ok(entry) = DesktopEntry::from_path(path.clone(), &locales) {
+                    log::debug!("{:?}::{}", path_src, &entry.appid);
+                    return Some((entry.appid.to_string(), entry));
+                }
+                None
+            })
+            .collect::<HashMap<String, _>>();
         Self(entries)
     }
 

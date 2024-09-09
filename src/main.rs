@@ -16,7 +16,9 @@ use env_logger::Env;
 use panel::Panel;
 
 pub mod app_tray;
+pub mod component_theme;
 pub mod components;
+
 mod config;
 pub mod desktop_entry;
 mod panel;
