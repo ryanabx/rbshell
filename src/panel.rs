@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use iced::{
     border::Radius,
-    widget::{button, column, row, text},
+    widget::{column, row, text},
     window::{self, Settings},
-    Background, Border, Element, Length, Padding, Subscription, Task, Theme,
+    Element, Length, Padding, Subscription, Task, Theme,
 };
 
 use crate::{

@@ -1,14 +1,8 @@
 use iced::{
     border::Radius,
-    daemon::DefaultStyle,
-    widget::{
-        button::{self, Catalog, Style},
-        Button,
-    },
+    widget::button::{self},
     Background, Border, Theme,
 };
-
-use crate::panel::Message;
 
 pub fn button_style(
     theme: &Theme,

@@ -7,10 +7,9 @@ use compositor::{
 };
 use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
-    border::Radius,
-    widget::{button, column, Container},
+    widget::{column, Container},
     window::Id,
-    Background, Border, Element, Length, Task, Theme,
+    Element, Length, Task, Theme,
 };
 
 use crate::{component_theme::button_style, config::AppTrayConfig};

@@ -1,4 +1,4 @@
-use std::{path::Path, rc::Rc};
+use std::rc::Rc;
 
 use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry};
 use iced::{
