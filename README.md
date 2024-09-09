@@ -15,7 +15,11 @@ The currently planned backends to be supported are:
 
 This shell is intended to be similar to Windows-style desktops, with a launcher in the bottom left, a list of favorite apps in the middle or left (configurable), and a tray with settings on the right! The designs aren't fully finished at the moment, but that's the general direction I'd like to go.
 
-The shell is proudly built entirely in [Rust!](https://www.rust-lang.org/) 
+The shell is proudly built entirely in [Rust!](https://www.rust-lang.org/)
+
+## Very early screenshot
+
+![Screenshot of the panel](res/screenshot.png)
 
 ## Build instructions (Ubuntu/Fedora instructions)
 
