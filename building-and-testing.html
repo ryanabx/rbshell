@@ -1261,13 +1261,24 @@
 
 <body class="outer-content content-body">
   <h3>Contents:</h3>
-  <ul><li><b>options</b></li><li><a href="config.html">config</a></li><li><a href="index.html">index</a></li></ul>
+  <ul><li><a href="index.html">index</a></li><li><b>building-and-testing</b></li></ul>
   <div class="inner-border">
     <div class="content-body">
-      <p><a href="index.html">Back to main page</a></p>
-<section id="Ryanabx-Shell-Program-options">
-<h1>Ryanabx Shell Program options</h1>
-</section>
+      <h2>Building rbshell</h2>
+<p>Building is simple, just</p>
+<pre><code class="language-shell">cargo build --release
+</code></pre>
+<h2>Testing (nested compositor)</h2>
+<p>To test in a nested compositor, first open up the compositor of choice (for example, <code>cosmic-comp</code>)</p>
+<pre><code class="language-shell">cosmic-comp
+</code></pre>
+<p>then find the wayland display identifier (typically <code>wayland-1</code> for the first nested compositor session).</p>
+<p>Set the <code>WAYLAND_DISPLAY</code> environment variable when running rbshell:</p>
+<pre><code class="language-shell">WAYLAND_DISPLAY=wayland-1 cargo run
+</code></pre>
+<blockquote>
+<p><strong>NOTE:</strong> rbshell has logging support! Just add <code>RUST_LOG=rbshell=[error|warn|info|debug|trace]</code> to your environment (select one of <code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code>, <code>trace</code>)</p>
+</blockquote>
 
     </div>
   </div>

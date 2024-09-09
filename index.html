@@ -1261,21 +1261,61 @@
 
 <body class="outer-content content-body">
   <h3>Contents:</h3>
-  <ul><li><a href="options.html">options</a></li><li><a href="config.html">config</a></li><li><b>index</b></li></ul>
+  <ul><li><b>index</b></li><li><a href="building-and-testing.html">building-and-testing</a></li></ul>
   <div class="inner-border">
     <div class="content-body">
-      <section id="Ryanabx-Shell---A-wayland-compositor-agnostic-desktop-shell">
-<h1>Ryanabx Shell - A wayland compositor agnostic desktop shell!</h1>
-<p>Table of Contents:</p>
+      <h1>rbshell - A wayland compositor agnostic desktop shell!</h1>
+<p>rbshell is an implementation of the desktop metaphor for linux. It currently only contains a panel, but in the future it might contain some other sub projects related to shell components, such as:</p>
 <ul>
-<li>
-<a href="config.html">Config</a>
+<li>OSDs (Brightness, audio, caps lock, etc.)</li>
+<li>Workspace/virtual desktop overview</li>
+</ul>
+<p>For now, we keep the scope limited to a single panel at the bottom of the screen.</p>
+<blockquote>
+<p><strong>NOTE:</strong> This project is very early in its development. We are also waiting on a version of iced master that has layer shell support. There is work being done on this at <a href="https://github.com/pop-os/iced">https://github.com/pop-os/iced</a> that I have contributed to, basically we need to rebase their changes onto the latest iced master. For now we are using winit until that gets resolved.</p>
+</blockquote>
+<h2>Design Goals</h2>
+<p>The design goal of this shell is to be as reasonably similar to Windows 11 as possible. The reason for this is to provide a linux shell that feels familiar to users of Windows. The metaphor of the task bar, with a start menu, window list, and system tray are common amongst a lot of desktop shells, but I hope to make something that takes it a step further. Of course, matching Windows 11 one to one would cause users frustration as things won't always function the same, so there's a reasonable amount of difference that we must have.</p>
+<p>This project's implementation is meant to be opinionated, and lacks the powerful customization that alternatives might have, but it also serves as a refreshingly simple implementation as a result, eschewing customization in favor of reducing decision fatigue for users who just want to get things done. This comes in contrast to something like <a href="https://kde.org/plasma-desktop/">KDE Plasma</a>'s panel, or <a href="https://system76.com/cosmic">COSMIC</a>'s panel, for example, since they both provide a myriad of applets to choose from. This comes with decisions, and speaking personally, I like to keep my variations to a minimum.</p>
+<p>A similarly opinionated shell is <a href="https://www.gnome.org/">GNOME Shell</a>; however, the way it implements the desktop metaphor is more "out there", forgoing the traditional Windows-style taskbar entirely. This is exciting for many users, but for others who come from Windows, it's often too much of a transition.</p>
+<h2>Support Goals</h2>
+<p>The goal for this shell is to be compatible with as many compositors as possible, providing the choice for users to choose whatever wayland experience they choose. As part of this goal, we support the following wayland protocols:</p>
+<ul>
+<li><a href="https://wayland.app/protocols/wlr-layer-shell-unstable-v1">wlr-layer-shell-unstable-v1</a>
+<ul>
+<li>This provides the ability for the panel to be anchored at the bottom of the screen, and is a 100% requirement for the shell to work.</li>
+<li>Supported by Wlroots-based compositors, cosmic-comp, hyprland, and kwin, and many others</li>
+<li>Not supported by GNOME or Weston</li>
+</ul>
 </li>
+<li><a href="https://wayland.app/protocols/wlr-foreign-toplevel-management-unstable-v1">wlr-foreign-toplevel-management-unstable-v1</a>
+<ul>
+<li>This provides toplevel list support for wlroots based compositors</li>
+<li>Supported by wlroots and hyprland, among others</li>
+</ul>
+</li>
+<li><a href="https://wayland.app/protocols/cosmic-toplevel-info-unstable-v1">cosmic-toplevel-info-unstable-v1</a>
+<ul>
+<li>Provides toplevel list support for cosmic-comp</li>
+<li>Supported by COSMIC</li>
+</ul>
+</li>
+<li><a href="https://wayland.app/protocols/kde-plasma-window-management">kde-plasma-window-management</a>
+<ul>
+<li>Provides complete window management (including toplevel list) support for kwin</li>
+<li>Supported by Kwin</li>
 <li>
-<a href="options.html">Program options</a>
+<blockquote>
+<p><strong>NOTE:</strong> Only ONE client can bind to this global per session. The KDE desktop typically binds this so you will need to run just Kwin for this global to be bound by rbshell</p>
+</blockquote>
 </li>
 </ul>
-</section>
+</li>
+</ul>
+<h2>Contributing</h2>
+<p>Contributions are welcome! Please <a href="https://github.com/ryanabx/rbshell/issues/">make an issue</a> before working on anything, as it's possible we could be duplicating work.</p>
+<h2>Reporting bugs</h2>
+<p>As with above, <a href="https://github.com/ryanabx/rbshell/issues/">making an issue</a> is highly recommended!</p>
 
     </div>
   </div>
