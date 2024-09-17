@@ -82,8 +82,16 @@ impl<'a> StartMenu<'a> {
     }
 
     pub fn view_popup(&self) -> iced::Element<StartMenuMessage> {
+        let locales = get_languages_from_env();
+        let mut keys = self.de_cache.0.iter().collect::<Vec<_>>();
+        keys.sort_by(|e, e2| {
+            e.1.desktop_entry
+                .name(&locales)
+                .unwrap_or("".into())
+                .cmp(&e2.1.desktop_entry.name(&locales).unwrap_or("".into()))
+        });
         iced::widget::scrollable(
-            iced::widget::column(self.de_cache.0.values().filter_map(view_menu_item))
+            iced::widget::column(keys.iter().filter_map(|(_, val)| view_menu_item(val)))
                 .height(Length::Shrink)
                 .width(Length::Fill)
                 .spacing(10),
