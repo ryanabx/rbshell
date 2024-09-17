@@ -72,7 +72,7 @@ impl<'a> AppTray<'a> {
                         }
                     }),
             )
-            .map(|(app_id, group)| {
+            .filter_map(|(app_id, group)| {
                 let entry = &self.de_cache.fuzzy_match(&app_id);
 
                 self.view_tray_item(&app_id, entry.as_ref(), group, active_window.clone())
@@ -122,44 +122,51 @@ impl<'a> AppTray<'a> {
         entry: Option<&EntryInfo<'a>>,
         app_info: HashMap<ToplevelHandle, CompositorToplevelInfo>,
         active_window: Option<ToplevelHandle>,
-    ) -> iced::widget::MouseArea<'a, AppTrayMessage> {
+    ) -> Option<iced::widget::MouseArea<'a, AppTrayMessage>> {
+        if entry.is_none() || entry.is_some_and(|e| e.invisible) {
+            return None;
+        }
         let is_active = active_window.is_some_and(|window| app_info.contains_key(&window));
         let num_toplevels = app_info.len();
         let icon_path = entry.and_then(|e| e.icon_path.as_deref());
-        iced::widget::mouse_area(
-            match icon_path {
-                Some(path) => iced::widget::button(column![
-                    get_horizontal_rule(is_active, num_toplevels, true),
-                    crate::components::app_icon(&path),
-                    get_horizontal_rule(is_active, num_toplevels, false)
-                ]),
-                None => iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-                    .width(Length::Fill)
-                    .height(Length::Fill),
-            }
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .padding(4)
-            .on_press_maybe(if num_toplevels == 0 {
-                entry
-                    .and_then(|entry| entry.desktop_entry.exec())
-                    .map(|exec| {
-                        AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
-                            app_id.to_string(),
-                            exec.to_string(),
-                        ))
-                    })
-            } else if num_toplevels == 1 {
-                Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
-                    app_info.keys().next().unwrap().clone(),
-                )))
-            } else {
-                None
-                // TODO
-            })
-            .style(move |theme, status| button_style(theme, status, is_active, num_toplevels)),
+        Some(
+            iced::widget::mouse_area(
+                match icon_path {
+                    Some(path) => iced::widget::button(column![
+                        get_horizontal_rule(is_active, num_toplevels, true),
+                        crate::components::app_icon(&path),
+                        get_horizontal_rule(is_active, num_toplevels, false)
+                    ]),
+                    None => {
+                        iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
+                            .width(Length::Fill)
+                            .height(Length::Fill)
+                    }
+                }
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .padding(4)
+                .on_press_maybe(if num_toplevels == 0 {
+                    entry
+                        .and_then(|entry| entry.desktop_entry.exec())
+                        .map(|exec| {
+                            AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
+                                app_id.to_string(),
+                                exec.to_string(),
+                            ))
+                        })
+                } else if num_toplevels == 1 {
+                    Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
+                        app_info.keys().next().unwrap().clone(),
+                    )))
+                } else {
+                    None
+                    // TODO
+                })
+                .style(move |theme, status| button_style(theme, status, is_active, num_toplevels)),
+            )
+            .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string())),
         )
-        .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string()))
         // .on_press_maybe(if toplevels.is_empty() {
         //     launch_on_preferred_gpu(desktop_info, gpus)
         // } else if toplevels.len() == 1 {

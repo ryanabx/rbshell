@@ -98,40 +98,33 @@ impl<'a> StartMenu<'a> {
 }
 
 fn view_menu_item<'a>(entry: &EntryInfo<'a>) -> Option<iced::Element<'a, StartMenuMessage>> {
-    if entry.desktop_entry.no_display()
-        || entry
-            .desktop_entry
-            .name(&get_languages_from_env())
-            .is_none()
-        || entry.desktop_entry.terminal()
-        || entry.desktop_entry.exec().is_none()
-    {
-        return None;
+    if entry.invisible {
+        None
+    } else {
+        Some(
+            iced::widget::button(row![
+                iced::widget::container(match &entry.icon_path {
+                    Some(path) => {
+                        app_icon(&path)
+                    }
+                    None => {
+                        // log::warn!("No icon for {}", desktop_entry.appid);
+                        Element::from(iced::widget::horizontal_space())
+                    }
+                })
+                .width(32)
+                .height(32),
+                text!(
+                    "{}",
+                    entry.desktop_entry.name(&get_languages_from_env()).unwrap()
+                ),
+            ])
+            .style(|theme, status| button_style(theme, status, false, 0))
+            .on_press(StartMenuMessage::Launch(
+                entry.desktop_entry.appid.to_string(),
+            ))
+            .width(Length::Fill)
+            .into(),
+        )
     }
-
-    Some(
-        iced::widget::button(row![
-            iced::widget::container(match &entry.icon_path {
-                Some(path) => {
-                    app_icon(&path)
-                }
-                None => {
-                    // log::warn!("No icon for {}", desktop_entry.appid);
-                    Element::from(iced::widget::horizontal_space())
-                }
-            })
-            .width(32)
-            .height(32),
-            text!(
-                "{}",
-                entry.desktop_entry.name(&get_languages_from_env()).unwrap()
-            ),
-        ])
-        .style(|theme, status| button_style(theme, status, false, 0))
-        .on_press(StartMenuMessage::Launch(
-            entry.desktop_entry.appid.to_string(),
-        ))
-        .width(Length::Fill)
-        .into(),
-    )
 }

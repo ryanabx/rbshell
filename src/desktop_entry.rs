@@ -11,56 +11,67 @@ pub struct DesktopEntryCache<'a>(pub HashMap<String, EntryInfo<'a>>);
 pub struct EntryInfo<'a> {
     pub desktop_entry: DesktopEntry<'a>,
     pub icon_path: Option<PathBuf>,
+    pub invisible: bool,
 }
 
 impl<'a> EntryInfo<'a> {
     pub fn new(desktop_entry: DesktopEntry<'a>) -> Self {
-        let icon_path = desktop_entry.icon().and_then(|icon| {
-            freedesktop_icons::lookup(icon)
-                .force_svg()
-                .with_cache()
-                .find()
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(512)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(256)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(128)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(96)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(64)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| {
-                    freedesktop_icons::lookup(icon)
-                        .with_size(48)
-                        .with_cache()
-                        .find()
-                })
-                .or_else(|| freedesktop_icons::lookup(icon).with_cache().find())
-        });
+        let invisible = desktop_entry.no_display()
+            || desktop_entry.name(&get_languages_from_env()).is_none()
+            || desktop_entry.terminal()
+            || desktop_entry.exec().is_none();
+
+        let icon_path = if invisible {
+            None
+        } else {
+            desktop_entry.icon().and_then(|icon| {
+                freedesktop_icons::lookup(icon)
+                    .force_svg()
+                    .with_cache()
+                    .find()
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(512)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(256)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(128)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(96)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(64)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| {
+                        freedesktop_icons::lookup(icon)
+                            .with_size(48)
+                            .with_cache()
+                            .find()
+                    })
+                    .or_else(|| freedesktop_icons::lookup(icon).with_cache().find())
+            })
+        };
         Self {
             desktop_entry,
             icon_path,
+            invisible,
         }
     }
 }
