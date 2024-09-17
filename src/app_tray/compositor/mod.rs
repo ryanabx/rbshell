@@ -467,7 +467,7 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     // Retrieve the WlDisplay Wayland object from the connection. This object is
     // the starting point of any Wayland program, from which all other objects will
     // be created.
-    let display = conn.display();
+    let _display = conn.display();
 
     // Create an event queue for our event processing
 
@@ -486,25 +486,25 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
                 log::trace!("WaylandRequest: {:?}", req);
                 match req {
                     WaylandRequest::Toplevel(req) => match req {
-                        WaylandToplevelRequest::Activate(handle) => {
+                        WaylandToplevelRequest::Activate(_handle) => {
                             // if let Some(seat) = state.seat_state.seats().next() {
                             //     let manager = &state.toplevel_manager_state.manager;
                             //     manager.activate(&handle, &seat);
                             // }
                         }
-                        WaylandToplevelRequest::Minimize(handle) => {
+                        WaylandToplevelRequest::Minimize(_handle) => {
                             // let manager = &state.toplevel_manager_state.manager;
                             // manager.set_minimized(&handle);
                         }
-                        WaylandToplevelRequest::Quit(handle) => {
+                        WaylandToplevelRequest::Quit(_handle) => {
                             // let manager = &state.toplevel_manager_state.manager;
                             // manager.close(&handle);
                         }
                     },
                     WaylandRequest::TokenRequest {
-                        app_id,
-                        exec,
-                        gpu_idx,
+                        app_id: _,
+                        exec: _,
+                        gpu_idx: _,
                     } => {
                         // if let Some(activation_state) = state.activation_state.as_ref() {
                         //     let seat_and_serial = state.seat_state.seats().next().map(|seat| (seat, 0));
@@ -547,20 +547,20 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     });
 
     // now you can bind the globals you need for your app
-    let zwlr_toplevel_manager = match globals
-        .bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(
-        &qh,
-        3..=3,
-        (),
-    ) {
-        Ok(manager) => Some(manager),
-        Err(e) => {
-            log::warn!("Wlroots toplevel manager could not be bound: {}", e);
-            None
-        }
-    };
+    let _zwlr_toplevel_manager =
+        match globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(
+            &qh,
+            3..=3,
+            (),
+        ) {
+            Ok(manager) => Some(manager),
+            Err(e) => {
+                log::warn!("Wlroots toplevel manager could not be bound: {}", e);
+                None
+            }
+        };
 
-    let zcosmic_toplevel_manager = match globals
+    let _zcosmic_toplevel_manager = match globals
         .bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ())
     {
         Ok(manager) => Some(manager),
@@ -570,7 +570,7 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
         }
     };
 
-    let kde_window_manager = match globals
+    let _kde_window_manager = match globals
         .bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(
         &qh,
         15..=16,
@@ -866,7 +866,6 @@ impl CompositorBackend {
                     None
                 }
             },
-            _ => todo!("Not implemented"),
         }
     }
 

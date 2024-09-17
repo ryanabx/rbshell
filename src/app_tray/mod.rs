@@ -5,14 +5,13 @@ use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
 };
-use freedesktop_desktop_entry::DesktopEntry;
 use iced::{
     widget::{column, Container},
     window::Id,
     Element, Length, Task, Theme,
 };
 
-use crate::{component_theme::button_style, config::AppTrayConfig};
+use crate::{component_theme::button_style, config::AppTrayConfig, desktop_entry::EntryInfo};
 
 pub mod compositor;
 
@@ -120,16 +119,13 @@ impl<'a> AppTray<'a> {
     fn view_tray_item(
         &self,
         app_id: &str,
-        desktop_entry: Option<&DesktopEntry<'a>>,
+        entry: Option<&EntryInfo<'a>>,
         app_info: HashMap<ToplevelHandle, CompositorToplevelInfo>,
         active_window: Option<ToplevelHandle>,
     ) -> iced::widget::MouseArea<'a, AppTrayMessage> {
         let is_active = active_window.is_some_and(|window| app_info.contains_key(&window));
         let num_toplevels = app_info.len();
-        let icon_name = desktop_entry.and_then(|entry| entry.icon());
-        let icon_path = icon_name
-            .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find())
-            .or_else(get_default_icon);
+        let icon_path = entry.and_then(|e| e.icon_path.as_deref());
         iced::widget::mouse_area(
             match icon_path {
                 Some(path) => iced::widget::button(column![
@@ -145,12 +141,14 @@ impl<'a> AppTray<'a> {
             .height(Length::Fill)
             .padding(4)
             .on_press_maybe(if num_toplevels == 0 {
-                desktop_entry.and_then(|entry| entry.exec()).map(|exec| {
-                    AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
-                        app_id.to_string(),
-                        exec.to_string(),
-                    ))
-                })
+                entry
+                    .and_then(|entry| entry.desktop_entry.exec())
+                    .map(|exec| {
+                        AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
+                            app_id.to_string(),
+                            exec.to_string(),
+                        ))
+                    })
             } else if num_toplevels == 1 {
                 Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
                     app_info.keys().next().unwrap().clone(),

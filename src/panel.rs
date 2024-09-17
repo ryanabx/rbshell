@@ -4,7 +4,7 @@ use iced::{
     border::Radius,
     widget::{column, row, text},
     window::{self, Settings},
-    Element, Length, Padding, Subscription, Task, Theme,
+    Element, Length, Padding, Size, Subscription, Task, Theme,
 };
 
 use crate::{
@@ -15,7 +15,6 @@ use crate::{
     start_menu::{StartMenu, StartMenuMessage},
 };
 
-#[derive(Clone, Debug)]
 pub struct Panel<'a> {
     start_menu: StartMenu<'a>,
     app_tray: AppTray<'a>,
@@ -60,6 +59,7 @@ impl<'a> Panel<'a> {
                 log::warn!("Start menu toggle!!");
                 let (_, task) = window::open(Settings {
                     position: window::Position::Centered,
+                    size: Size::new(240.0, 480.0),
                     ..Default::default()
                 });
                 task.map(move |i| Message::OpenPopup(i, PopupType::StartMenu))

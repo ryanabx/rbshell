@@ -1,11 +1,69 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use freedesktop_desktop_entry::{
     default_paths, get_languages_from_env, DesktopEntry, Iter, Locale, PathSource,
 };
 
 #[derive(Clone, Debug)]
-pub struct DesktopEntryCache<'a>(pub HashMap<String, DesktopEntry<'a>>);
+pub struct DesktopEntryCache<'a>(pub HashMap<String, EntryInfo<'a>>);
+
+#[derive(Clone, Debug)]
+pub struct EntryInfo<'a> {
+    pub desktop_entry: DesktopEntry<'a>,
+    pub icon_path: Option<PathBuf>,
+}
+
+impl<'a> EntryInfo<'a> {
+    pub fn new(desktop_entry: DesktopEntry<'a>) -> Self {
+        let icon_path = desktop_entry.icon().and_then(|icon| {
+            freedesktop_icons::lookup(icon)
+                .force_svg()
+                .with_cache()
+                .find()
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(512)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(256)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(128)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(96)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(64)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| {
+                    freedesktop_icons::lookup(icon)
+                        .with_size(48)
+                        .with_cache()
+                        .find()
+                })
+                .or_else(|| freedesktop_icons::lookup(icon).with_cache().find())
+        });
+        Self {
+            desktop_entry,
+            icon_path,
+        }
+    }
+}
 
 impl<'a> Default for DesktopEntryCache<'a> {
     fn default() -> Self {
@@ -22,7 +80,7 @@ impl<'a> DesktopEntryCache<'a> {
                 let path_src = PathSource::guess_from(&path);
                 if let Ok(entry) = DesktopEntry::from_path(path.clone(), &locales) {
                     log::debug!("{:?}::{}", path_src, &entry.appid);
-                    return Some((entry.appid.to_string(), entry));
+                    return Some((entry.appid.to_string(), EntryInfo::new(entry)));
                 }
                 None
             })
@@ -30,21 +88,25 @@ impl<'a> DesktopEntryCache<'a> {
         Self(entries)
     }
 
-    pub fn fuzzy_match(&self, pattern: &str) -> Option<DesktopEntry<'a>> {
+    pub fn fuzzy_match(&self, pattern: &str) -> Option<EntryInfo<'a>> {
         self.0
             .get(pattern)
             .or_else(|| {
                 self.0.values().find(|entry| {
                     // log::debug!("entry: {}", entry.appid);
-                    entry.startup_wm_class().is_some_and(|wm_class| {
-                        // log::trace!("Fuzzy matching wm class {} == {}", wm_class, pattern);
-                        wm_class == pattern
-                    })
+                    entry
+                        .desktop_entry
+                        .startup_wm_class()
+                        .is_some_and(|wm_class| {
+                            // log::trace!("Fuzzy matching wm class {} == {}", wm_class, pattern);
+                            wm_class == pattern
+                        })
                 })
             })
             .or_else(|| {
                 self.0.values().find(|entry| {
                     entry
+                        .desktop_entry
                         .name(&[Locale::default()])
                         .is_some_and(|name| name == pattern)
                 })

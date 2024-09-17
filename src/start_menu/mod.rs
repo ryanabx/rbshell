@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use freedesktop_desktop_entry::{get_languages_from_env, DesktopEntry};
+use freedesktop_desktop_entry::get_languages_from_env;
 use iced::{
     border::Radius,
     widget::{
@@ -12,7 +12,9 @@ use iced::{
 };
 
 use crate::{
-    component_theme::button_style, components::app_icon, desktop_entry::DesktopEntryCache,
+    component_theme::button_style,
+    components::app_icon,
+    desktop_entry::{DesktopEntryCache, EntryInfo},
 };
 
 #[derive(Clone, Debug)]
@@ -21,9 +23,8 @@ pub enum StartMenuMessage {
     Launch(String),
 }
 
-#[derive(Clone, Debug)]
 pub struct StartMenu<'a> {
-    de_cache: Rc<DesktopEntryCache<'a>>,
+    pub de_cache: Rc<DesktopEntryCache<'a>>,
 }
 
 impl<'a> StartMenu<'a> {
@@ -92,24 +93,25 @@ impl<'a> StartMenu<'a> {
         .width(Length::Fill)
         .into()
     }
+
+    pub fn populate_menu_items(&mut self) {}
 }
 
-fn view_menu_item<'a>(
-    desktop_entry: &DesktopEntry<'a>,
-) -> Option<iced::Element<'a, StartMenuMessage>> {
-    if desktop_entry.no_display()
-        || desktop_entry.name(&get_languages_from_env()).is_none()
-        || desktop_entry.terminal()
-        || desktop_entry.exec().is_none()
+fn view_menu_item<'a>(entry: &EntryInfo<'a>) -> Option<iced::Element<'a, StartMenuMessage>> {
+    if entry.desktop_entry.no_display()
+        || entry
+            .desktop_entry
+            .name(&get_languages_from_env())
+            .is_none()
+        || entry.desktop_entry.terminal()
+        || entry.desktop_entry.exec().is_none()
     {
         return None;
     }
-    let icon_path = desktop_entry
-        .icon()
-        .and_then(|icon| freedesktop_icons::lookup(icon).with_cache().find());
+
     Some(
         iced::widget::button(row![
-            iced::widget::container(match icon_path {
+            iced::widget::container(match &entry.icon_path {
                 Some(path) => {
                     app_icon(&path)
                 }
@@ -120,10 +122,15 @@ fn view_menu_item<'a>(
             })
             .width(32)
             .height(32),
-            text!("{}", desktop_entry.name(&get_languages_from_env()).unwrap()),
+            text!(
+                "{}",
+                entry.desktop_entry.name(&get_languages_from_env()).unwrap()
+            ),
         ])
         .style(|theme, status| button_style(theme, status, false, 0))
-        .on_press(StartMenuMessage::Launch(desktop_entry.appid.to_string()))
+        .on_press(StartMenuMessage::Launch(
+            entry.desktop_entry.appid.to_string(),
+        ))
         .width(Length::Fill)
         .into(),
     )
