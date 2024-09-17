@@ -1,0 +1,6 @@
+[book]
+authors = ["Ryan Brue"]
+language = "en"
+multilingual = false
+src = "src"
+title = "rbshell - A wayland shell"
