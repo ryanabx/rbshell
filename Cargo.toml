@@ -29,3 +29,4 @@ wayland-client = "0.31.5"
 wayland-protocols-wlr = { version = "0.3.3", features = ["client"] }
 smithay-client-toolkit = "0.19.2"
 wayland-protocols-plasma = { version = "0.3.3", features = ["client"] }
+async-std = "1.13.0"

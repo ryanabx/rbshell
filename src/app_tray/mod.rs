@@ -198,7 +198,3 @@ fn get_horizontal_rule<'a>(
     .width(Length::Fixed(if is_active { 12.0 } else { 6.0 }))
     .center_x(Length::Fill)
 }
-
-fn get_default_icon() -> Option<PathBuf> {
-    freedesktop_icons::lookup("wayland").with_cache().find()
-}

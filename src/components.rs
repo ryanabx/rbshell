@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use iced::{Element, Length};
 
@@ -18,4 +18,11 @@ pub fn app_icon<'a, T>(icon_path: &Path) -> iced::Element<'a, T> {
                 .height(Length::Fill),
         )
     }
+}
+
+pub fn default_icon_path() -> PathBuf {
+    freedesktop_icons::lookup("wayland")
+        .with_cache()
+        .find()
+        .unwrap()
 }

@@ -1,11 +1,14 @@
 use clock::{Clock, ClockMessage};
 use iced::{widget::row, Length, Task};
+use status_icons::StatusIcons;
 
 mod clock;
+mod status_icons;
 
 #[derive(Clone, Debug)]
 pub struct SettingsTray {
     clock: Clock,
+    status_icons: StatusIcons,
 }
 
 #[derive(Clone, Debug)]
@@ -17,6 +20,7 @@ impl SettingsTray {
     pub fn new() -> Self {
         Self {
             clock: Clock::new(),
+            status_icons: StatusIcons::new(),
         }
     }
 
@@ -30,11 +34,14 @@ impl SettingsTray {
     }
 
     pub fn view(&self) -> iced::Element<SettingsTrayMessage> {
-        iced::widget::container(row![self.clock.view().map(SettingsTrayMessage::Clock)])
-            .center_y(Length::Fill)
-            .width(Length::Fill)
-            .align_x(iced::alignment::Horizontal::Right)
-            .into()
+        iced::widget::container(row![
+            self.status_icons.view(),
+            self.clock.view().map(SettingsTrayMessage::Clock),
+        ])
+        .center_y(Length::Fill)
+        .width(Length::Fill)
+        .align_x(iced::alignment::Horizontal::Right)
+        .into()
     }
 
     pub fn subscription(&self) -> iced::Subscription<SettingsTrayMessage> {

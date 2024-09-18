@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use async_std::task::spawn_blocking;
 use chrono::{Local, Timelike, Utc};
 use iced::{futures::SinkExt, widget::column, Length, Task};
 
@@ -73,7 +74,10 @@ impl Clock {
                         let now = Instant::now();
 
                         if let Some(delay) = deadline.checked_duration_since(now) {
-                            sleep(delay);
+                            spawn_blocking(move || {
+                                sleep(delay);
+                            })
+                            .await
                         }
                     };
                 }
