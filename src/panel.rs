@@ -2,10 +2,16 @@ use std::rc::Rc;
 
 use iced::{
     border::Radius,
+    platform_specific::{
+        runtime::wayland::layer_surface::{IcedOutput, SctkLayerSurfaceSettings},
+        shell::commands::layer_surface::get_layer_surface,
+    },
     widget::{column, row, text},
-    window::{self, Settings},
+    window::{self, Id, Settings},
     Element, Length, Padding, Size, Subscription, Task, Theme,
 };
+use smithay_client_toolkit::shell::wlr_layer::Anchor;
+use wayland_protocols_wlr::layer_shell;
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
@@ -31,10 +37,25 @@ pub enum PopupType {
 
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
-        let (id, open) = window::open(window::Settings {
-            size: (1280.0, 48.0).into(),
+        let id = Id::unique();
+        let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
+            id,
+            layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
+            // keyboard_interactivity: todo!(),
+            // pointer_interactivity: todo!(),
+            anchor: Anchor::LEFT.union(Anchor::BOTTOM).union(Anchor::RIGHT),
+            output: IcedOutput::Active,
+            // namespace: todo!(),
+            // margin: todo!(),
+            size: Some((None, Some(48))),
+            exclusive_zone: 48,
+            // size_limits: todo!(),
             ..Default::default()
         });
+        // let (id, open) = window::open(window::Settings {
+        //     size: (1280.0, 48.0).into(),
+        //     ..Default::default()
+        // });
         log::debug!("Window requested open {:?}", id);
         let desktop_entry_cache = Rc::new(DesktopEntryCache::new());
         (
@@ -45,7 +66,8 @@ impl<'a> Panel<'a> {
                 main_window: id,
                 popup_window: None,
             },
-            open.map(Message::OpenMainWindow),
+            open,
+            // open.map(Message::OpenMainWindow),
         )
     }
 
@@ -110,6 +132,7 @@ impl<'a> Panel<'a> {
 
     pub fn view(&self, window: window::Id) -> Element<Message> {
         if window == self.main_window {
+            // if window != self.main_window {
             let panel_items = row![
                 self.start_menu.view().map(Message::StartMenu),
                 self.app_tray.view().map(Message::AppTray),

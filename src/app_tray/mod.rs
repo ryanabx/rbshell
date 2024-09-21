@@ -43,6 +43,7 @@ impl<'a> AppTray<'a> {
     }
 
     pub fn view(&self) -> iced::Element<AppTrayMessage> {
+        log::debug!("AppTray::view");
         let active_window = self.backend.active_window();
         // Get app tray apps
         let app_tray_apps = self

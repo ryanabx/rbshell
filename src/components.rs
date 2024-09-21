@@ -22,6 +22,7 @@ pub fn app_icon<'a, T>(icon_path: &Path) -> iced::Element<'a, T> {
 
 pub fn default_icon_path() -> PathBuf {
     freedesktop_icons::lookup("wayland")
+        .with_theme("breeze")
         .with_cache()
         .find()
         .unwrap()

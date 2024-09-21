@@ -13,6 +13,7 @@ use env_logger::Env;
 //     Application, Settings,
 // };
 
+use iced::Settings;
 use panel::Panel;
 
 pub mod app_tray;
@@ -55,6 +56,7 @@ fn main() -> Result<(), PanelError> {
             .config
             .unwrap_or(Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json")),
     );
+
     let res = iced::daemon(Panel::title, Panel::update, Panel::view)
         // iced::application(Panel::title, Panel::update, Panel::view)
         .subscription(Panel::subscription)
