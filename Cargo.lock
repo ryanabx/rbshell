@@ -1163,7 +1163,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b28bfe653d79bd16c77f659305b195b82bb5ce0c0eb2a4846b82ddbd77586813"
 dependencies = [
  "bitflags 2.6.0",
- "libloading 0.7.4",
+ "libloading 0.8.5",
  "winapi",
 ]
 
@@ -2081,7 +2081,7 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "dnd",
  "iced_accessibility",
@@ -2099,7 +2099,7 @@ dependencies = [
 [[package]]
 name = "iced_accessibility"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -2108,7 +2108,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "bitflags 2.6.0",
  "bytes",
@@ -2132,7 +2132,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "async-std",
  "futures",
@@ -2146,7 +2146,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "bitflags 2.6.0",
  "bytemuck",
@@ -2167,7 +2167,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -2179,7 +2179,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "bytes",
  "dnd",
@@ -2194,7 +2194,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -2210,7 +2210,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "as-raw-xcb-connection",
  "bitflags 2.6.0",
@@ -2240,7 +2240,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "dnd",
  "iced_renderer",
@@ -2257,7 +2257,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#9f9469dd904720cb011c735ec51fd9208fa6599a"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
 dependencies = [
  "dnd",
  "iced_futures",
@@ -4702,7 +4702,7 @@ dependencies = [
  "js-sys",
  "khronos-egl",
  "libc",
- "libloading 0.7.4",
+ "libloading 0.8.5",
  "log",
  "metal",
  "naga",

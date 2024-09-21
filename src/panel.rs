@@ -42,7 +42,7 @@ impl<'a> Panel<'a> {
             id,
             layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
             // keyboard_interactivity: todo!(),
-            // pointer_interactivity: todo!(),
+            pointer_interactivity: true,
             anchor: Anchor::LEFT.union(Anchor::BOTTOM).union(Anchor::RIGHT),
             output: IcedOutput::Active,
             // namespace: todo!(),
