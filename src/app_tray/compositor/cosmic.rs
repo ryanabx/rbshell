@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
-use cosmic_protocols::toplevel_info::v1::client::{
-    zcosmic_toplevel_handle_v1, zcosmic_toplevel_info_v1,
+use cosmic_protocols::{
+    toplevel_info::v1::client::{zcosmic_toplevel_handle_v1, zcosmic_toplevel_info_v1},
+    toplevel_management::v1::client::zcosmic_toplevel_manager_v1,
 };
 use wayland_client::{Connection, Dispatch, Proxy, QueueHandle};
 
@@ -77,7 +78,7 @@ impl Dispatch<zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, ()> for AppDa
         _conn: &Connection,
         _qhandle: &QueueHandle<Self>,
     ) {
-        // println!("TOPLEVEL HANDLE EVENT! {:?}", event);
+        log::trace!("zcosmic_toplevel_handle_v1::event: {:?}", event);
         state.handle_toplevel_handle_event(
             ToplevelHandle::Zcosmic(toplevel.clone()),
             ToplevelHandleEvent::from(event),
@@ -94,11 +95,24 @@ impl Dispatch<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, ()> for AppData {
         _conn: &Connection,
         _qhandle: &QueueHandle<Self>,
     ) {
-        // println!("Toplevel manager event! {:?}", event);
+        log::trace!("zcosmic_toplevel_info_v1::event: {:?}", event);
         state.handle_toplevel_manager_event(ToplevelManagerEvent::from(event));
     }
 
     wayland_client::event_created_child!(AppData, zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, [
         zcosmic_toplevel_info_v1::EVT_TOPLEVEL_OPCODE => (zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, ())
     ]);
+}
+
+impl Dispatch<zcosmic_toplevel_manager_v1::ZcosmicToplevelManagerV1, ()> for AppData {
+    fn event(
+        state: &mut Self,
+        proxy: &zcosmic_toplevel_manager_v1::ZcosmicToplevelManagerV1,
+        event: <zcosmic_toplevel_manager_v1::ZcosmicToplevelManagerV1 as Proxy>::Event,
+        data: &(),
+        conn: &Connection,
+        qhandle: &QueueHandle<Self>,
+    ) {
+        // println!("Event! {:?}", event);
+    }
 }

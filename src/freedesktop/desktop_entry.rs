@@ -29,8 +29,9 @@ impl<'a> EntryInfo<'a> {
             desktop_entry.icon().and_then(|icon| {
                 freedesktop_icons::lookup(icon)
                     .with_theme("hicolor")
-                    .with_cache()
+                    .force_svg()
                     .find()
+                    .or_else(|| freedesktop_icons::lookup(icon).with_theme("hicolor").find())
                     .or_else(|| default_icon_path(&icon_theme))
             })
         };
@@ -45,12 +46,12 @@ impl<'a> EntryInfo<'a> {
 impl<'a> DesktopEntryCache<'a> {
     pub fn new(icon_theme: &IconTheme) -> Self {
         let locales = get_languages_from_env();
-        log::debug!("{:?}", default_paths());
+        log::trace!("{:?}", default_paths());
         let entries = Iter::new(default_paths())
             .filter_map(|path| {
                 let path_src = PathSource::guess_from(&path);
                 if let Ok(entry) = DesktopEntry::from_path(path.clone(), &locales) {
-                    log::debug!("{:?}::{}", path_src, &entry.appid);
+                    log::trace!("{:?}::{}", path_src, &entry.appid);
                     return Some((entry.appid.to_string(), EntryInfo::new(entry, &icon_theme)));
                 }
                 None

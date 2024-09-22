@@ -4,6 +4,7 @@ use cosmic_protocols::{
     toplevel_info::v1::client::{
         zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, zcosmic_toplevel_info_v1,
     },
+    toplevel_management::v1::client::zcosmic_toplevel_manager_v1,
     workspace::v1::client::zcosmic_workspace_handle_v1,
 };
 use iced::{
@@ -26,6 +27,7 @@ use smithay_client_toolkit::{
         },
         calloop_wayland_source::WaylandSource,
     },
+    seat::{SeatHandler, SeatState},
 };
 use wayland_client::{
     globals::{registry_queue_init, GlobalListContents},
@@ -50,7 +52,12 @@ struct AppData {
     exit: bool,
     tx: UnboundedSender<WaylandIncoming>,
     output_state: OutputState,
+    seat_state: SeatState,
     toplevel_state: ToplevelManager,
+    zwlr_toplevel_manager: Option<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1>,
+    zcosmic_toplevel_info: Option<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1>,
+    zcosmic_toplevel_manager: Option<zcosmic_toplevel_manager_v1::ZcosmicToplevelManagerV1>,
+    kde_window_manager: Option<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement>,
 }
 
 impl AppData {
@@ -76,9 +83,17 @@ impl AppData {
                 data.pending_info.output.remove(&output);
             }
             ToplevelHandleEvent::State { state } => {
+                log::debug!(
+                    "{} STATE CHANGE! new_pending: {:?} -> pending: {:?} :: current: {:?}",
+                    data.pending_info.app_id,
+                    state,
+                    data.pending_info.state,
+                    data.current_info.as_ref().map(|info| info.state.clone())
+                );
                 data.pending_info.state = state;
             }
             ToplevelHandleEvent::Done => {
+                log::debug!("{} commit!", data.pending_info.app_id);
                 let is_new = data.current_info.is_none();
                 data.current_info = Some(data.pending_info.clone());
                 if is_new {
@@ -156,6 +171,46 @@ pub enum ToplevelState {
     Minimized,
     Fullscreen,
     Activated,
+}
+
+impl SeatHandler for AppData {
+    fn seat_state(&mut self) -> &mut smithay_client_toolkit::seat::SeatState {
+        &mut self.seat_state
+    }
+
+    fn new_seat(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _seat: wayland_client::protocol::wl_seat::WlSeat,
+    ) {
+    }
+
+    fn new_capability(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _seat: wayland_client::protocol::wl_seat::WlSeat,
+        _capability: smithay_client_toolkit::seat::Capability,
+    ) {
+    }
+
+    fn remove_capability(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _seat: wayland_client::protocol::wl_seat::WlSeat,
+        _capability: smithay_client_toolkit::seat::Capability,
+    ) {
+    }
+
+    fn remove_seat(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _seat: wayland_client::protocol::wl_seat::WlSeat,
+    ) {
+    }
 }
 
 impl OutputHandler for AppData {
@@ -270,20 +325,31 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
                 log::trace!("WaylandRequest: {:?}", req);
                 match req {
                     WaylandRequest::Toplevel(req) => match req {
-                        WaylandToplevelRequest::Activate(_handle) => {
-                            // if let Some(seat) = state.seat_state.seats().next() {
-                            //     let manager = &state.toplevel_manager_state.manager;
-                            //     manager.activate(&handle, &seat);
-                            // }
-                        }
-                        WaylandToplevelRequest::Minimize(_handle) => {
-                            // let manager = &state.toplevel_manager_state.manager;
-                            // manager.set_minimized(&handle);
-                        }
-                        WaylandToplevelRequest::Quit(_handle) => {
-                            // let manager = &state.toplevel_manager_state.manager;
-                            // manager.close(&handle);
-                        }
+                        WaylandToplevelRequest::Activate(handle) => match handle {
+                            ToplevelHandle::Zwlr(zwlr_foreign_toplevel_handle_v1) => todo!(),
+                            ToplevelHandle::Zcosmic(handle) => {
+                                log::debug!("Activating toplevel!");
+                                if let Some(seat) = state.seat_state.seats().next() {
+                                    let manager = state.zcosmic_toplevel_manager.as_ref().unwrap();
+                                    manager.activate(&handle, &seat);
+                                }
+                            }
+                        },
+                        WaylandToplevelRequest::Minimize(handle) => match handle {
+                            ToplevelHandle::Zwlr(zwlr_foreign_toplevel_handle_v1) => todo!(),
+                            ToplevelHandle::Zcosmic(handle) => {
+                                log::debug!("Minimizing toplevel!");
+                                let manager = state.zcosmic_toplevel_manager.as_ref().unwrap();
+                                manager.set_minimized(&handle);
+                            }
+                        },
+                        WaylandToplevelRequest::Quit(handle) => match handle {
+                            ToplevelHandle::Zwlr(zwlr_foreign_toplevel_handle_v1) => todo!(),
+                            ToplevelHandle::Zcosmic(handle) => {
+                                let manager = state.zcosmic_toplevel_manager.as_ref().unwrap();
+                                manager.close(&handle);
+                            }
+                        },
                     },
                     WaylandRequest::TokenRequest {
                         app_id: _,
@@ -331,30 +397,52 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     });
 
     // now you can bind the globals you need for your app
-    let _zwlr_toplevel_manager =
-        match globals.bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(
-            &qh,
-            3..=3,
-            (),
-        ) {
-            Ok(manager) => Some(manager),
-            Err(e) => {
-                log::warn!("Wlroots toplevel manager could not be bound: {}", e);
-                None
-            }
-        };
-
-    let _zcosmic_toplevel_manager = match globals
-        .bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ())
-    {
+    let zwlr_toplevel_manager = match globals
+        .bind::<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, _, _>(
+        &qh,
+        3..=3,
+        (),
+    ) {
         Ok(manager) => Some(manager),
         Err(e) => {
-            log::warn!("Cosmic toplevel info could not be bound: {}", e);
+            log::info!(
+                "[PROTOCOL] zwlr_foreign_toplevel_manager_v1 could not be bound: {}",
+                e
+            );
             None
         }
     };
 
-    let _kde_window_manager = match globals
+    let zcosmic_toplevel_info = match globals
+        .bind::<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, _, _>(&qh, 1..=1, ())
+    {
+        Ok(manager) => Some(manager),
+        Err(e) => {
+            log::info!(
+                "[PROTOCOL] zcosmic_toplevel_info_v1 could not be bound: {}",
+                e
+            );
+            None
+        }
+    };
+
+    let zcosmic_toplevel_manager = match globals
+        .bind::<zcosmic_toplevel_manager_v1::ZcosmicToplevelManagerV1, _, _>(
+        &qh,
+        1..=1,
+        (),
+    ) {
+        Ok(manager) => Some(manager),
+        Err(e) => {
+            log::info!(
+                "[PROTOCOL] zcosmic_toplevel_manager_v1 could not be bound: {}",
+                e
+            );
+            None
+        }
+    };
+
+    let kde_window_manager = match globals
         .bind::<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, _, _>(
         &qh,
         15..=16,
@@ -362,7 +450,10 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     ) {
         Ok(manager) => Some(manager),
         Err(e) => {
-            log::warn!("KDE window manager could not be bound: {}", e);
+            log::info!(
+                "[PROTOCOL] org_kde_plasma_window_management could not be bound: {}",
+                e
+            );
             None
         }
     };
@@ -377,7 +468,12 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
         exit: false,
         tx,
         output_state: OutputState::new(&globals, &qh),
+        seat_state: SeatState::new(&globals, &qh),
         toplevel_state: ToplevelManager::default(),
+        zcosmic_toplevel_info,
+        zcosmic_toplevel_manager,
+        zwlr_toplevel_manager,
+        kde_window_manager,
     };
 
     loop {
@@ -389,6 +485,7 @@ fn wayland_client_listener(tx: UnboundedSender<WaylandIncoming>, rx: Channel<Way
     }
 }
 
+smithay_client_toolkit::delegate_seat!(AppData);
 smithay_client_toolkit::delegate_output!(AppData);
 
 #[derive(Clone, Debug)]
@@ -555,7 +652,10 @@ impl CompositorBackend {
             WaylandOutgoing::Toggle(window) => {
                 if let Some(tx) = self.wayland_sender.as_ref() {
                     let _ = tx.send(WaylandRequest::Toplevel(
-                        if self.active_window().is_some() {
+                        if self
+                            .active_window()
+                            .is_some_and(|active_window| active_window == window)
+                        {
                             WaylandToplevelRequest::Minimize(window)
                         } else {
                             WaylandToplevelRequest::Activate(window)
