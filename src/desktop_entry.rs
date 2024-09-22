@@ -26,46 +26,10 @@ impl<'a> EntryInfo<'a> {
         } else {
             desktop_entry.icon().and_then(|icon| {
                 freedesktop_icons::lookup(icon)
-                    .force_svg()
+                    .with_theme("hicolor")
                     .with_cache()
                     .find()
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(512)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(256)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(128)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(96)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(64)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| {
-                        freedesktop_icons::lookup(icon)
-                            .with_size(48)
-                            .with_cache()
-                            .find()
-                    })
-                    .or_else(|| freedesktop_icons::lookup(icon).with_cache().find())
+                    .or_else(default_icon_path)
             })
         };
         Self {
@@ -124,4 +88,24 @@ impl<'a> DesktopEntryCache<'a> {
             })
             .cloned() // TODO: Can I make this more efficient?
     }
+}
+
+pub fn default_icon_path() -> Option<PathBuf> {
+    freedesktop_icons::lookup("wayland")
+        .with_theme("breeze")
+        .with_cache()
+        .find()
+}
+
+pub fn start_menu_icon() -> Option<PathBuf> {
+    freedesktop_icons::lookup("applications-all")
+        .with_theme("breeze")
+        .with_cache()
+        .find()
+        .or_else(|| {
+            freedesktop_icons::lookup("applications-office")
+                .with_theme("Cosmic")
+                .with_cache()
+                .find()
+        })
 }

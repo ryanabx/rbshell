@@ -12,8 +12,8 @@ use iced::{
 
 use crate::{
     component_theme::{button_style, PANEL_SIZE},
-    components::{app_icon, app_tray_button, start_menu_icon},
-    desktop_entry::{DesktopEntryCache, EntryInfo},
+    components::{app_icon, app_tray_button},
+    desktop_entry::{start_menu_icon, DesktopEntryCache, EntryInfo},
 };
 
 #[derive(Clone, Debug)]

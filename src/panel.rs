@@ -38,7 +38,7 @@ pub enum PopupType {
     StartMenu,
 }
 
-const USE_WINIT: bool = false; // For testing. {true=winit, false=layer_shell}
+const USE_WINIT: bool = true; // For testing. {true=winit, false=layer_shell}
 
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {

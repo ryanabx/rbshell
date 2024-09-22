@@ -1,4 +1,4 @@
-use crate::components::{app_icon, default_icon_path};
+use crate::{components::app_icon, desktop_entry::default_icon_path};
 
 use super::SettingsTrayMessage;
 
@@ -15,7 +15,7 @@ impl StatusIcons {
             .with_theme("AdwaitaLegacy")
             .with_cache()
             .find()
-            .unwrap_or(default_icon_path());
-        iced::widget::row![app_icon(&icon_path)].into()
+            .or_else(default_icon_path);
+        iced::widget::row![app_icon(&icon_path.unwrap())].into()
     }
 }

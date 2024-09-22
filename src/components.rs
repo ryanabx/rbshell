@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use iced::{
     widget::{column, Container},
@@ -63,25 +63,4 @@ pub fn app_icon<'a, T>(icon_path: &Path) -> iced::Element<'a, T> {
                 .height(Length::Fill),
         )
     }
-}
-
-pub fn default_icon_path() -> PathBuf {
-    freedesktop_icons::lookup("wayland")
-        .with_theme("breeze")
-        .with_cache()
-        .find()
-        .unwrap()
-}
-
-pub fn start_menu_icon() -> Option<PathBuf> {
-    freedesktop_icons::lookup("applications-all")
-        .with_theme("breeze")
-        .with_cache()
-        .find()
-        .or_else(|| {
-            freedesktop_icons::lookup("applications-office")
-                .with_theme("Cosmic")
-                .with_cache()
-                .find()
-        })
 }
