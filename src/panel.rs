@@ -3,8 +3,11 @@ use std::rc::Rc;
 use iced::{
     border::Radius,
     platform_specific::{
-        runtime::wayland::layer_surface::{IcedMargin, IcedOutput, SctkLayerSurfaceSettings},
-        shell::commands::layer_surface::get_layer_surface,
+        runtime::wayland::{
+            layer_surface::{IcedMargin, IcedOutput, SctkLayerSurfaceSettings},
+            popup::{SctkPopupSettings, SctkPositioner},
+        },
+        shell::commands::{layer_surface::get_layer_surface, popup},
     },
     widget::{column, row, text},
     window::{self, Id, Settings},
@@ -36,34 +39,41 @@ pub enum PopupType {
     StartMenu,
 }
 
+const USE_WINIT: bool = false; // For testing. {true=winit, false=layer_shell}
+
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
-        let id = Id::unique();
-        let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
-            id,
-            layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
-            // keyboard_interactivity: todo!(),
-            pointer_interactivity: true,
-            anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
-            output: IcedOutput::Active,
-            // namespace: todo!(),
-            // margin: IcedMargin {
-            //     top: 5,
-            //     right: 5,
-            //     left: 5,
-            //     bottom: 5,
-            // },
-            // size: Some((None, Some(48))),
-            size: Some((None, Some(PANEL_SIZE))),
-            exclusive_zone: PANEL_SIZE as i32,
-            // size_limits: todo!(),
-            ..Default::default()
-        });
-        // let (id, open) = window::open(window::Settings {
-        //     size: (1280.0, 48.0).into(),
-        //     ..Default::default()
-        // });
-        log::debug!("Window requested open {:?}", id);
+        let (id, open) = if USE_WINIT {
+            let (id, open) = window::open(window::Settings {
+                size: (1280.0, 48.0).into(),
+                ..Default::default()
+            });
+            (id, open.map(Message::OpenMainWindow))
+        } else {
+            let id = Id::unique();
+            let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
+                id,
+                layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
+                // keyboard_interactivity: todo!(),
+                pointer_interactivity: true,
+                anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
+                output: IcedOutput::Active,
+                // namespace: todo!(),
+                // margin: IcedMargin {
+                //     top: 5,
+                //     right: 5,
+                //     left: 5,
+                //     bottom: 5,
+                // },
+                // size: Some((None, Some(48))),
+                size: Some((None, Some(PANEL_SIZE))),
+                exclusive_zone: PANEL_SIZE as i32,
+                // size_limits: todo!(),
+                ..Default::default()
+            });
+            (id, open)
+        };
+        log::info!("Window requested open {:?}", id);
         let desktop_entry_cache = Rc::new(DesktopEntryCache::new());
         (
             Self {
@@ -74,7 +84,6 @@ impl<'a> Panel<'a> {
                 popup_window: None,
             },
             open,
-            // open.map(Message::OpenMainWindow),
         )
     }
 
@@ -85,12 +94,30 @@ impl<'a> Panel<'a> {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::StartMenu(StartMenuMessage::MenuToggle) => {
-                log::warn!("Start menu toggle!!");
-                let (_, task) = window::open(Settings {
-                    position: window::Position::Centered,
-                    size: Size::new(240.0, 480.0),
-                    ..Default::default()
+                log::debug!("Requested start menu");
+                let id = Id::unique();
+                let task = popup::get_popup(SctkPopupSettings {
+                    parent: self.main_window,
+                    id,
+                    positioner: SctkPositioner {
+                        size: Some((240, 480)),
+                        // size_limits: todo!(),
+                        // anchor_rect: todo!(),
+                        // anchor: todo!(),
+                        // gravity: todo!(),
+                        // constraint_adjustment: todo!(),
+                        // offset: todo!(),
+                        // reactive: todo!(),
+                        ..Default::default()
+                    },
+                    parent_size: None,
+                    grab: true, // What does this do??
                 });
+                // let (_, task) = window::open(Settings {
+                //     position: window::Position::Centered,
+                //     size: Size::new(240.0, 480.0),
+                //     ..Default::default()
+                // });
                 task.map(move |i| Message::OpenPopup(i, PopupType::StartMenu))
             }
             Message::StartMenu(start_menu_message) => self
@@ -120,12 +147,15 @@ impl<'a> Panel<'a> {
                 .handle_message(settings_tray_msg)
                 .map(Message::SettingsTray),
             Message::OpenPopup(id, popup_info) => {
-                let task = if let Some((popup, _)) = self.popup_window.take() {
-                    iced::window::close(popup)
+                log::debug!("Popup opened! {:?}", id);
+                let task = if let Some((popup, popup_type)) = self.popup_window.take() {
+                    match popup_type {
+                        PopupType::AppTrayContextMenu { app_id } => iced::window::close(popup),
+                        PopupType::StartMenu => popup::destroy_popup(id),
+                    }
                 } else {
                     Task::none()
                 };
-                log::debug!("Popup opened! {:?}", id);
                 self.popup_window = Some((id, popup_info));
                 task
             }
