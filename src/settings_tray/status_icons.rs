@@ -1,4 +1,7 @@
-use crate::{components::app_icon, desktop_entry::default_icon_path};
+use crate::{
+    components::app_icon,
+    freedesktop::icons::{default_icon_path, IconTheme},
+};
 
 use super::SettingsTrayMessage;
 
@@ -10,12 +13,12 @@ impl StatusIcons {
         Self {}
     }
 
-    pub fn view(&self) -> iced::Element<'static, SettingsTrayMessage> {
+    pub fn view(&self, icon_theme: &IconTheme) -> iced::Element<'static, SettingsTrayMessage> {
         let icon_path = freedesktop_icons::lookup("network-wireless")
             .with_theme("AdwaitaLegacy")
             .with_cache()
             .find()
-            .or_else(default_icon_path);
+            .or_else(|| default_icon_path(icon_theme));
         iced::widget::row![app_icon(&icon_path.unwrap())].into()
     }
 }

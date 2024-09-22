@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use super::desktop_entry::DesktopEntryCache;
+use super::freedesktop::desktop_entry::DesktopEntryCache;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
@@ -11,7 +11,7 @@ use crate::{
     component_theme::{button_style, PANEL_SIZE},
     components::app_tray_button,
     config::AppTrayConfig,
-    desktop_entry::EntryInfo,
+    freedesktop::desktop_entry::EntryInfo,
 };
 
 pub mod compositor;

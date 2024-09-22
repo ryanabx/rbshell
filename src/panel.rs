@@ -1,4 +1,4 @@
-use std::{env, rc::Rc};
+use std::rc::Rc;
 
 use iced::{
     border::Radius,
@@ -19,7 +19,7 @@ use crate::{
     app_tray::{AppTray, AppTrayMessage},
     component_theme::PANEL_SIZE,
     config::PanelConfig,
-    desktop_entry::DesktopEntryCache,
+    freedesktop::{desktop_entry::DesktopEntryCache, icons::IconTheme},
     settings_tray::{SettingsTray, SettingsTrayMessage},
     start_menu::{StartMenu, StartMenuMessage},
 };
@@ -30,6 +30,7 @@ pub struct Panel<'a> {
     settings_tray: SettingsTray,
     main_window: window::Id,
     popup_window: Option<(window::Id, PopupType)>,
+    icon_theme: IconTheme,
 }
 
 #[derive(Clone, Debug)]
@@ -40,39 +41,38 @@ pub enum PopupType {
 
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
-        let (id, open) =
-            if env::var("RBSHELL_USE_WINIT").is_ok_and(|val| val.to_lowercase() == "true") {
-                let (id, open) = window::open(window::Settings {
-                    size: (1280.0, 48.0).into(),
-                    ..Default::default()
-                });
-                (id, open.map(|_| Message::None))
-            } else {
-                let id = Id::unique();
-                let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
-                    id,
-                    layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
-                    // keyboard_interactivity: todo!(),
-                    pointer_interactivity: true,
-                    anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
-                    output: IcedOutput::Active,
-                    // namespace: todo!(),
-                    // margin: IcedMargin {
-                    //     top: 5,
-                    //     right: 5,
-                    //     left: 5,
-                    //     bottom: 5,
-                    // },
-                    // size: Some((None, Some(48))),
-                    size: Some((None, Some(PANEL_SIZE))),
-                    exclusive_zone: PANEL_SIZE as i32,
-                    // size_limits: todo!(),
-                    ..Default::default()
-                });
-                (id, open)
-            };
+        let (id, open) = if config.use_winit {
+            let (id, open) = window::open(window::Settings {
+                size: (1280.0, 48.0).into(),
+                ..Default::default()
+            });
+            (id, open.map(|_| Message::None))
+        } else {
+            let id = Id::unique();
+            let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
+                id,
+                layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
+                // keyboard_interactivity: todo!(),
+                pointer_interactivity: true,
+                anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
+                output: IcedOutput::Active,
+                // namespace: todo!(),
+                // margin: IcedMargin {
+                //     top: 5,
+                //     right: 5,
+                //     left: 5,
+                //     bottom: 5,
+                // },
+                // size: Some((None, Some(48))),
+                size: Some((None, Some(PANEL_SIZE))),
+                exclusive_zone: PANEL_SIZE as i32,
+                // size_limits: todo!(),
+                ..Default::default()
+            });
+            (id, open)
+        };
         log::info!("Window requested open {:?}", id);
-        let desktop_entry_cache = Rc::new(DesktopEntryCache::new());
+        let desktop_entry_cache = Rc::new(DesktopEntryCache::new(&config.icon_theme));
         (
             Self {
                 start_menu: StartMenu::new(desktop_entry_cache.clone()),
@@ -80,6 +80,7 @@ impl<'a> Panel<'a> {
                 settings_tray: SettingsTray::new(),
                 main_window: id,
                 popup_window: None,
+                icon_theme: config.icon_theme,
             },
             open,
         )
@@ -172,6 +173,7 @@ impl<'a> Panel<'a> {
             let panel_items = row![
                 self.start_menu
                     .view(
+                        &self.icon_theme,
                         self.popup_window
                             .as_ref()
                             .is_some_and(|(_, popup_type)| matches!(
@@ -181,7 +183,9 @@ impl<'a> Panel<'a> {
                     )
                     .map(Message::StartMenu),
                 self.app_tray.view().map(Message::AppTray),
-                self.settings_tray.view().map(Message::SettingsTray)
+                self.settings_tray
+                    .view(&self.icon_theme)
+                    .map(Message::SettingsTray)
             ]
             .padding(Padding {
                 right: 16.0,

@@ -18,9 +18,9 @@ use panel::Panel;
 pub mod app_tray;
 pub mod component_theme;
 pub mod components;
+pub mod freedesktop;
 
 mod config;
-pub mod desktop_entry;
 mod panel;
 mod settings_tray;
 pub mod start_menu;

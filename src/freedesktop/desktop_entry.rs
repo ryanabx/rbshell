@@ -4,6 +4,8 @@ use freedesktop_desktop_entry::{
     default_paths, get_languages_from_env, DesktopEntry, Iter, Locale, PathSource,
 };
 
+use super::icons::{default_icon_path, IconTheme};
+
 #[derive(Clone, Debug)]
 pub struct DesktopEntryCache<'a>(pub HashMap<String, EntryInfo<'a>>);
 
@@ -15,7 +17,7 @@ pub struct EntryInfo<'a> {
 }
 
 impl<'a> EntryInfo<'a> {
-    pub fn new(desktop_entry: DesktopEntry<'a>) -> Self {
+    pub fn new(desktop_entry: DesktopEntry<'a>, icon_theme: &IconTheme) -> Self {
         let invisible = desktop_entry.no_display()
             || desktop_entry.name(&get_languages_from_env()).is_none()
             || desktop_entry.terminal()
@@ -29,7 +31,7 @@ impl<'a> EntryInfo<'a> {
                     .with_theme("hicolor")
                     .with_cache()
                     .find()
-                    .or_else(default_icon_path)
+                    .or_else(|| default_icon_path(&icon_theme))
             })
         };
         Self {
@@ -40,14 +42,8 @@ impl<'a> EntryInfo<'a> {
     }
 }
 
-impl<'a> Default for DesktopEntryCache<'a> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<'a> DesktopEntryCache<'a> {
-    pub fn new() -> Self {
+    pub fn new(icon_theme: &IconTheme) -> Self {
         let locales = get_languages_from_env();
         log::debug!("{:?}", default_paths());
         let entries = Iter::new(default_paths())
@@ -55,7 +51,7 @@ impl<'a> DesktopEntryCache<'a> {
                 let path_src = PathSource::guess_from(&path);
                 if let Ok(entry) = DesktopEntry::from_path(path.clone(), &locales) {
                     log::debug!("{:?}::{}", path_src, &entry.appid);
-                    return Some((entry.appid.to_string(), EntryInfo::new(entry)));
+                    return Some((entry.appid.to_string(), EntryInfo::new(entry, &icon_theme)));
                 }
                 None
             })
@@ -88,24 +84,4 @@ impl<'a> DesktopEntryCache<'a> {
             })
             .cloned() // TODO: Can I make this more efficient?
     }
-}
-
-pub fn default_icon_path() -> Option<PathBuf> {
-    freedesktop_icons::lookup("wayland")
-        .with_theme("breeze")
-        .with_cache()
-        .find()
-}
-
-pub fn start_menu_icon() -> Option<PathBuf> {
-    freedesktop_icons::lookup("applications-all")
-        .with_theme("breeze")
-        .with_cache()
-        .find()
-        .or_else(|| {
-            freedesktop_icons::lookup("applications-office")
-                .with_theme("Cosmic")
-                .with_cache()
-                .find()
-        })
 }

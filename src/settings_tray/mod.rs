@@ -2,6 +2,8 @@ use clock::{Clock, ClockMessage};
 use iced::{widget::row, Length, Task};
 use status_icons::StatusIcons;
 
+use crate::freedesktop::icons::IconTheme;
+
 mod clock;
 mod status_icons;
 
@@ -33,9 +35,9 @@ impl SettingsTray {
         }
     }
 
-    pub fn view(&self) -> iced::Element<SettingsTrayMessage> {
+    pub fn view(&self, icon_theme: &IconTheme) -> iced::Element<SettingsTrayMessage> {
         iced::widget::container(row![
-            self.status_icons.view(),
+            self.status_icons.view(icon_theme),
             self.clock.view().map(SettingsTrayMessage::Clock),
         ])
         .center_y(Length::Fill)

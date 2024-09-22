@@ -6,6 +6,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::freedesktop::icons::IconTheme;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("IO: {0}")]
@@ -14,9 +16,21 @@ pub enum ConfigError {
     Serde(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PanelConfig {
     pub app_tray: AppTrayConfig,
+    pub icon_theme: IconTheme,
+    pub use_winit: bool,
+}
+
+impl Default for PanelConfig {
+    fn default() -> Self {
+        Self {
+            app_tray: Default::default(),
+            icon_theme: Default::default(),
+            use_winit: Default::default(),
+        }
+    }
 }
 
 impl PanelConfig {
