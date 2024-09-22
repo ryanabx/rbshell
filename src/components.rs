@@ -72,3 +72,16 @@ pub fn default_icon_path() -> PathBuf {
         .find()
         .unwrap()
 }
+
+pub fn start_menu_icon() -> Option<PathBuf> {
+    freedesktop_icons::lookup("applications-all")
+        .with_theme("breeze")
+        .with_cache()
+        .find()
+        .or_else(|| {
+            freedesktop_icons::lookup("applications-office")
+                .with_theme("Cosmic")
+                .with_cache()
+                .find()
+        })
+}

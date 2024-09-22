@@ -13,7 +13,7 @@ use iced::{
 
 use crate::{
     component_theme::{button_style, PANEL_SIZE},
-    components::{app_icon, app_tray_button},
+    components::{app_icon, app_tray_button, start_menu_icon},
     desktop_entry::{DesktopEntryCache, EntryInfo},
 };
 
@@ -33,10 +33,7 @@ impl<'a> StartMenu<'a> {
     }
 
     pub fn view(&self, start_menu_opened: bool) -> iced::Element<StartMenuMessage> {
-        let start_menu_icon_path = freedesktop_icons::lookup("applications-all")
-            .with_theme("breeze")
-            .with_cache()
-            .find();
+        let start_menu_icon_path = start_menu_icon();
         iced::widget::container(
             app_tray_button(start_menu_icon_path.as_deref(), start_menu_opened, 0, true)
                 .on_press(StartMenuMessage::MenuToggle)
