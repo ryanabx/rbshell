@@ -12,7 +12,8 @@ use iced::{
 };
 
 use crate::{
-    component_theme::{button_style, PANEL_SIZE},
+    component_theme::{app_tray_icon_rule, button_style, APP_TRAY_RULE_THICKNESS, PANEL_SIZE},
+    components::app_tray_button,
     config::AppTrayConfig,
     desktop_entry::EntryInfo,
 };
@@ -136,39 +137,27 @@ impl<'a> AppTray<'a> {
         let icon_path = entry.and_then(|e| e.icon_path.as_deref());
         Some(
             iced::widget::mouse_area(
-                match icon_path {
-                    Some(path) => iced::widget::button(column![
-                        get_horizontal_rule(is_active, num_toplevels, true),
-                        crate::components::app_icon(&path),
-                        get_horizontal_rule(is_active, num_toplevels, false)
-                    ]),
-                    None => {
-                        iced::widget::button(iced::widget::Space::new(Length::Fill, Length::Fill))
-                            .width(Length::Fill)
-                            .height(Length::Fill)
-                    }
-                }
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .padding(4)
-                .on_press_maybe(if num_toplevels == 0 {
-                    entry
-                        .and_then(|entry| entry.desktop_entry.exec())
-                        .map(|exec| {
-                            AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
-                                app_id.to_string(),
-                                exec.to_string(),
-                            ))
-                        })
-                } else if num_toplevels == 1 {
-                    Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
-                        app_info.keys().next().unwrap().clone(),
-                    )))
-                } else {
-                    None
-                    // TODO
-                })
-                .style(move |theme, status| button_style(theme, status, is_active, num_toplevels)),
+                app_tray_button(icon_path, is_active, num_toplevels, false)
+                    .on_press_maybe(if num_toplevels == 0 {
+                        entry
+                            .and_then(|entry| entry.desktop_entry.exec())
+                            .map(|exec| {
+                                AppTrayMessage::WaylandOut(WaylandOutgoing::Exec(
+                                    app_id.to_string(),
+                                    exec.to_string(),
+                                ))
+                            })
+                    } else if num_toplevels == 1 {
+                        Some(AppTrayMessage::WaylandOut(WaylandOutgoing::Toggle(
+                            app_info.keys().next().unwrap().clone(),
+                        )))
+                    } else {
+                        None
+                        // TODO
+                    })
+                    .style(move |theme, status| {
+                        button_style(theme, status, is_active, num_toplevels)
+                    }),
             )
             .on_right_press(AppTrayMessage::ContextMenu(app_id.to_string())),
         )
@@ -180,26 +169,4 @@ impl<'a> AppTray<'a> {
         //     Some(Message::TopLevelListPopup((*id).into(), window_id))
         // })
     }
-}
-
-fn get_horizontal_rule<'a>(
-    is_active: bool,
-    num_toplevels: usize,
-    force_transparent: bool,
-) -> Container<'a, AppTrayMessage> {
-    let transparent = force_transparent || num_toplevels == 0;
-    iced::widget::container(
-        iced::widget::horizontal_rule(1).style(move |theme: &Theme| iced::widget::rule::Style {
-            color: if transparent {
-                iced::Color::TRANSPARENT
-            } else {
-                theme.palette().primary
-            },
-            width: (2.0) as u16,
-            radius: 4.into(),
-            fill_mode: iced::widget::rule::FillMode::Full,
-        }),
-    )
-    .width(Length::Fixed(if is_active { 12.0 } else { 6.0 }))
-    // .center_x(Length::Fill)
 }

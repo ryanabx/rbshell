@@ -13,7 +13,7 @@ use iced::{
 
 use crate::{
     component_theme::{button_style, PANEL_SIZE},
-    components::app_icon,
+    components::{app_icon, app_tray_button},
     desktop_entry::{DesktopEntryCache, EntryInfo},
 };
 
@@ -32,13 +32,15 @@ impl<'a> StartMenu<'a> {
         Self { de_cache }
     }
 
-    pub fn view(&self) -> iced::Element<StartMenuMessage> {
+    pub fn view(&self, start_menu_opened: bool) -> iced::Element<StartMenuMessage> {
+        let start_menu_icon_path = freedesktop_icons::lookup("applications-all")
+            .with_theme("breeze")
+            .with_cache()
+            .find();
         iced::widget::container(
-            iced::widget::button(iced::widget::horizontal_space())
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .style(Self::tray_button_style)
-                .on_press(StartMenuMessage::MenuToggle),
+            app_tray_button(start_menu_icon_path.as_deref(), start_menu_opened, 0, true)
+                .on_press(StartMenuMessage::MenuToggle)
+                .style(move |theme, status| button_style(theme, status, start_menu_opened, 0)),
         )
         .width(PANEL_SIZE as u16)
         .height(PANEL_SIZE as u16)
@@ -58,27 +60,6 @@ impl<'a> StartMenu<'a> {
 
     pub fn subscription(&self) -> iced::Subscription<StartMenuMessage> {
         todo!()
-    }
-
-    fn tray_button_style(theme: &Theme, status: button::Status) -> button::Style {
-        let mut border_color = theme.palette().primary;
-        let mut background_color = theme.palette().primary;
-        (border_color.a, background_color.a) =
-            if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-                (0.80, 0.20)
-            } else {
-                (0.26, 0.10)
-            };
-
-        button::Style {
-            background: Some(Background::Color(background_color)),
-            border: Border {
-                radius: Radius::from(8.0),
-                color: border_color,
-                width: 8.0,
-            },
-            ..Default::default()
-        }
     }
 
     pub fn view_popup(&self) -> iced::Element<StartMenuMessage> {

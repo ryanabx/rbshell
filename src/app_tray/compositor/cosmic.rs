@@ -77,7 +77,7 @@ impl Dispatch<zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, ()> for AppDa
         _conn: &Connection,
         _qhandle: &QueueHandle<Self>,
     ) {
-        println!("TOPLEVEL HANDLE EVENT! {:?}", event);
+        // println!("TOPLEVEL HANDLE EVENT! {:?}", event);
         state.handle_toplevel_handle_event(
             ToplevelHandle::Zcosmic(toplevel.clone()),
             ToplevelHandleEvent::from(event),
@@ -94,7 +94,7 @@ impl Dispatch<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, ()> for AppData {
         _conn: &Connection,
         _qhandle: &QueueHandle<Self>,
     ) {
-        println!("Toplevel manager event! {:?}", event);
+        // println!("Toplevel manager event! {:?}", event);
         state.handle_toplevel_manager_event(ToplevelManagerEvent::from(event));
     }
 

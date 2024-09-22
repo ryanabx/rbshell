@@ -134,14 +134,24 @@ impl<'a> Panel<'a> {
     }
 
     pub fn theme(&self, _window: window::Id) -> Theme {
-        Theme::Dark
+        // Theme::Dark
+        Theme::CatppuccinFrappe
     }
 
     pub fn view(&self, window: window::Id) -> Element<Message> {
         if window == self.main_window {
             // if window != self.main_window {
             let panel_items = row![
-                self.start_menu.view().map(Message::StartMenu),
+                self.start_menu
+                    .view(
+                        self.popup_window
+                            .as_ref()
+                            .is_some_and(|(_, popup_type)| matches!(
+                                popup_type,
+                                PopupType::StartMenu
+                            ))
+                    )
+                    .map(Message::StartMenu),
                 self.app_tray.view().map(Message::AppTray),
                 self.settings_tray.view().map(Message::SettingsTray)
             ]
