@@ -4,6 +4,8 @@ use iced::{
     Background, Border, Theme,
 };
 
+pub const PANEL_SIZE: u32 = 48;
+
 pub fn button_style(
     theme: &Theme,
     status: button::Status,

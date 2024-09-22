@@ -12,7 +12,7 @@ use iced::{
 };
 
 use crate::{
-    component_theme::button_style,
+    component_theme::{button_style, PANEL_SIZE},
     components::app_icon,
     desktop_entry::{DesktopEntryCache, EntryInfo},
 };
@@ -40,8 +40,8 @@ impl<'a> StartMenu<'a> {
                 .style(Self::tray_button_style)
                 .on_press(StartMenuMessage::MenuToggle),
         )
-        .width(48)
-        .height(48)
+        .width(PANEL_SIZE as u16)
+        .height(PANEL_SIZE as u16)
         .padding(4.0)
         .into()
     }

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use iced::{
     border::Radius,
     platform_specific::{
-        runtime::wayland::layer_surface::{IcedOutput, SctkLayerSurfaceSettings},
+        runtime::wayland::layer_surface::{IcedMargin, IcedOutput, SctkLayerSurfaceSettings},
         shell::commands::layer_surface::get_layer_surface,
     },
     widget::{column, row, text},
@@ -15,6 +15,7 @@ use wayland_protocols_wlr::layer_shell;
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
+    component_theme::PANEL_SIZE,
     config::PanelConfig,
     desktop_entry::DesktopEntryCache,
     settings_tray::{SettingsTray, SettingsTrayMessage},
@@ -43,12 +44,18 @@ impl<'a> Panel<'a> {
             layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
             // keyboard_interactivity: todo!(),
             pointer_interactivity: true,
-            anchor: Anchor::LEFT.union(Anchor::BOTTOM).union(Anchor::RIGHT),
+            anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
             output: IcedOutput::Active,
             // namespace: todo!(),
-            // margin: todo!(),
-            size: Some((None, Some(48))),
-            exclusive_zone: 48,
+            // margin: IcedMargin {
+            //     top: 5,
+            //     right: 5,
+            //     left: 5,
+            //     bottom: 5,
+            // },
+            // size: Some((None, Some(48))),
+            size: Some((None, Some(PANEL_SIZE))),
+            exclusive_zone: PANEL_SIZE as i32,
             // size_limits: todo!(),
             ..Default::default()
         });

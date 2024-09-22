@@ -2081,7 +2081,7 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "dnd",
  "iced_accessibility",
@@ -2099,7 +2099,7 @@ dependencies = [
 [[package]]
 name = "iced_accessibility"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -2108,7 +2108,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "bitflags 2.6.0",
  "bytes",
@@ -2132,7 +2132,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "async-std",
  "futures",
@@ -2146,7 +2146,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "bitflags 2.6.0",
  "bytemuck",
@@ -2167,7 +2167,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -2179,7 +2179,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "bytes",
  "dnd",
@@ -2194,7 +2194,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -2210,7 +2210,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "as-raw-xcb-connection",
  "bitflags 2.6.0",
@@ -2240,7 +2240,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "dnd",
  "iced_renderer",
@@ -2257,7 +2257,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#db79ba8539445c3feceb0c68209253b7fd74c1f0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#f9a9f38ec526ea61b5cd9b1dc424d8874d3dab5d"
 dependencies = [
  "dnd",
  "iced_futures",

@@ -11,7 +11,11 @@ use iced::{
     Element, Length, Task, Theme,
 };
 
-use crate::{component_theme::button_style, config::AppTrayConfig, desktop_entry::EntryInfo};
+use crate::{
+    component_theme::{button_style, PANEL_SIZE},
+    config::AppTrayConfig,
+    desktop_entry::EntryInfo,
+};
 
 pub mod compositor;
 
@@ -82,8 +86,8 @@ impl<'a> AppTray<'a> {
                 Element::from(
                     iced::widget::container(x)
                         // .width(Length::Fill)
-                        .width(48)
-                        .height(48)
+                        .width(PANEL_SIZE as u16)
+                        .height(PANEL_SIZE as u16)
                         .padding(4.0),
                 )
             });
