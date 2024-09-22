@@ -33,7 +33,7 @@ use wayland_client::{
         wl_output::{self, WlOutput},
         wl_registry::{self},
     },
-    Connection, Proxy, QueueHandle,
+    Connection, QueueHandle,
 };
 use wayland_protocols_plasma::plasma_window_management::client::org_kde_plasma_window_management;
 use wayland_protocols_wlr::foreign_toplevel::v1::client::{

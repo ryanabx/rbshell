@@ -5,7 +5,7 @@ use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
 };
-use iced::{window::Id, Element, Task};
+use iced::{Element, Task};
 
 use crate::{
     component_theme::{button_style, PANEL_SIZE},
@@ -21,7 +21,6 @@ pub struct AppTray<'a> {
     de_cache: Rc<DesktopEntryCache<'a>>,
     backend: CompositorBackend,
     config: AppTrayConfig,
-    context_menu: Option<Id>,
 }
 
 #[derive(Clone, Debug)]
@@ -39,7 +38,6 @@ impl<'a> AppTray<'a> {
             de_cache,
             backend: CompositorBackend::new(),
             config,
-            context_menu: None,
         }
     }
 

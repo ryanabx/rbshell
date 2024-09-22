@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{env, rc::Rc};
 
 use iced::{
     border::Radius,
@@ -34,44 +34,43 @@ pub struct Panel<'a> {
 
 #[derive(Clone, Debug)]
 pub enum PopupType {
-    AppTrayContextMenu { app_id: String },
+    AppTrayContextMenu { _app_id: String },
     StartMenu,
 }
 
-const USE_WINIT: bool = true; // For testing. {true=winit, false=layer_shell}
-
 impl<'a> Panel<'a> {
     pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
-        let (id, open) = if USE_WINIT {
-            let (id, open) = window::open(window::Settings {
-                size: (1280.0, 48.0).into(),
-                ..Default::default()
-            });
-            (id, open.map(Message::OpenMainWindow))
-        } else {
-            let id = Id::unique();
-            let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
-                id,
-                layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
-                // keyboard_interactivity: todo!(),
-                pointer_interactivity: true,
-                anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
-                output: IcedOutput::Active,
-                // namespace: todo!(),
-                // margin: IcedMargin {
-                //     top: 5,
-                //     right: 5,
-                //     left: 5,
-                //     bottom: 5,
-                // },
-                // size: Some((None, Some(48))),
-                size: Some((None, Some(PANEL_SIZE))),
-                exclusive_zone: PANEL_SIZE as i32,
-                // size_limits: todo!(),
-                ..Default::default()
-            });
-            (id, open)
-        };
+        let (id, open) =
+            if env::var("RBSHELL_USE_WINIT").is_ok_and(|val| val.to_lowercase() == "true") {
+                let (id, open) = window::open(window::Settings {
+                    size: (1280.0, 48.0).into(),
+                    ..Default::default()
+                });
+                (id, open.map(|_| Message::None))
+            } else {
+                let id = Id::unique();
+                let open: Task<Message> = get_layer_surface(SctkLayerSurfaceSettings {
+                    id,
+                    layer: smithay_client_toolkit::shell::wlr_layer::Layer::Top,
+                    // keyboard_interactivity: todo!(),
+                    pointer_interactivity: true,
+                    anchor: Anchor::BOTTOM.union(Anchor::LEFT).union(Anchor::RIGHT),
+                    output: IcedOutput::Active,
+                    // namespace: todo!(),
+                    // margin: IcedMargin {
+                    //     top: 5,
+                    //     right: 5,
+                    //     left: 5,
+                    //     bottom: 5,
+                    // },
+                    // size: Some((None, Some(48))),
+                    size: Some((None, Some(PANEL_SIZE))),
+                    exclusive_zone: PANEL_SIZE as i32,
+                    // size_limits: todo!(),
+                    ..Default::default()
+                });
+                (id, open)
+            };
         log::info!("Window requested open {:?}", id);
         let desktop_entry_cache = Rc::new(DesktopEntryCache::new());
         (
@@ -132,7 +131,7 @@ impl<'a> Panel<'a> {
                     Message::OpenPopup(
                         i,
                         PopupType::AppTrayContextMenu {
-                            app_id: app_id.clone(),
+                            _app_id: app_id.clone(),
                         },
                     )
                 })
@@ -149,7 +148,7 @@ impl<'a> Panel<'a> {
                 log::debug!("Popup opened! {:?}", id);
                 let task = if let Some((popup, popup_type)) = self.popup_window.take() {
                     match popup_type {
-                        PopupType::AppTrayContextMenu { app_id } => iced::window::close(popup),
+                        PopupType::AppTrayContextMenu { .. } => iced::window::close(popup),
                         PopupType::StartMenu => popup::destroy_popup(id),
                     }
                 } else {
@@ -158,7 +157,7 @@ impl<'a> Panel<'a> {
                 self.popup_window = Some((id, popup_info));
                 task
             }
-            Message::OpenMainWindow(_) => Task::none(),
+            Message::None => Task::none(),
         }
     }
 
@@ -204,7 +203,7 @@ impl<'a> Panel<'a> {
             .into()
         } else if let Some(popup_window) = &self.popup_window.as_ref() {
             match &popup_window.1 {
-                PopupType::AppTrayContextMenu { app_id } => text!("Hey").into(),
+                PopupType::AppTrayContextMenu { .. } => text!("Hey").into(),
                 PopupType::StartMenu => self.start_menu.view_popup().map(Message::StartMenu),
             }
         } else {
@@ -226,5 +225,5 @@ pub enum Message {
     AppTray(AppTrayMessage),
     SettingsTray(SettingsTrayMessage),
     OpenPopup(window::Id, PopupType),
-    OpenMainWindow(window::Id),
+    None,
 }

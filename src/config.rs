@@ -35,7 +35,7 @@ impl PanelConfig {
             .unwrap_or_default()
     }
 
-    pub fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
+    pub fn _save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
         let data = serde_json::to_string_pretty(self)?;
         std::fs::write(path, data)?;
         Ok(())
