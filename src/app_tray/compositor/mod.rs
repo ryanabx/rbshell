@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use cosmic_protocols::{
     toplevel_info::v1::client::{
-        zcosmic_toplevel_handle_v1::{self, ZcosmicToplevelHandleV1},
+        zcosmic_toplevel_handle_v1::{ZcosmicToplevelHandleV1},
         zcosmic_toplevel_info_v1,
     },
     workspace::v1::client::zcosmic_workspace_handle_v1,
@@ -29,19 +29,16 @@ use smithay_client_toolkit::{
     },
 };
 use wayland_client::{
-    event_created_child,
     globals::{registry_queue_init, GlobalListContents},
     protocol::{
         wl_output::{self, WlOutput},
         wl_registry::{self},
     },
-    Connection, Dispatch, Proxy, QueueHandle,
+    Connection, Proxy, QueueHandle,
 };
-use wayland_protocols_plasma::plasma_window_management::client::{
-    org_kde_plasma_window, org_kde_plasma_window_management,
-};
+use wayland_protocols_plasma::plasma_window_management::client::org_kde_plasma_window_management;
 use wayland_protocols_wlr::foreign_toplevel::v1::client::{
-    zwlr_foreign_toplevel_handle_v1::{self, ZwlrForeignToplevelHandleV1},
+    zwlr_foreign_toplevel_handle_v1::{ZwlrForeignToplevelHandleV1},
     zwlr_foreign_toplevel_manager_v1,
 };
 

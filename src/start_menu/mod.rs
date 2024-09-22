@@ -2,13 +2,11 @@ use std::rc::Rc;
 
 use freedesktop_desktop_entry::get_languages_from_env;
 use iced::{
-    border::Radius,
     widget::{
-        button, row,
+        row,
         scrollable::{Direction, Scrollbar},
         text,
-    },
-    Background, Border, Element, Length, Task, Theme,
+    }, Element, Length, Task,
 };
 
 use crate::{
@@ -91,7 +89,7 @@ fn view_menu_item<'a>(entry: &EntryInfo<'a>) -> Option<iced::Element<'a, StartMe
             iced::widget::button(row![
                 iced::widget::container(match &entry.icon_path {
                     Some(path) => {
-                        app_icon(&path)
+                        app_icon(path)
                     }
                     None => {
                         // log::warn!("No icon for {}", desktop_entry.appid);

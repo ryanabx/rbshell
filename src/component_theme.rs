@@ -33,12 +33,10 @@ pub fn button_style(
         } else {
             (0.0, 0.0)
         }
+    } else if matches!(status, button::Status::Hovered | button::Status::Pressed) {
+        (0.11, 0.1)
     } else {
-        if matches!(status, button::Status::Hovered | button::Status::Pressed) {
-            (0.11, 0.1)
-        } else {
-            (0.0, 0.0)
-        }
+        (0.0, 0.0)
     };
 
     let mut button_theme = iced::widget::button::primary(theme, status);

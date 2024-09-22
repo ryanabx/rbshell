@@ -1,4 +1,3 @@
-use iced::widget::horizontal_space;
 
 use crate::components::{app_icon, default_icon_path};
 

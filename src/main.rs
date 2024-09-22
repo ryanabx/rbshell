@@ -13,7 +13,6 @@ use env_logger::Env;
 //     Application, Settings,
 // };
 
-use iced::Settings;
 use panel::Panel;
 
 pub mod app_tray;

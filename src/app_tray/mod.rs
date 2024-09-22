@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
 use super::desktop_entry::DesktopEntryCache;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
@@ -6,13 +6,12 @@ use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
 };
 use iced::{
-    widget::{column, Container},
     window::Id,
-    Element, Length, Task, Theme,
+    Element, Task,
 };
 
 use crate::{
-    component_theme::{app_tray_icon_rule, button_style, APP_TRAY_RULE_THICKNESS, PANEL_SIZE},
+    component_theme::{button_style, PANEL_SIZE},
     components::app_tray_button,
     config::AppTrayConfig,
     desktop_entry::EntryInfo,

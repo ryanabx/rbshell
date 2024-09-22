@@ -4,17 +4,16 @@ use iced::{
     border::Radius,
     platform_specific::{
         runtime::wayland::{
-            layer_surface::{IcedMargin, IcedOutput, SctkLayerSurfaceSettings},
+            layer_surface::{IcedOutput, SctkLayerSurfaceSettings},
             popup::{SctkPopupSettings, SctkPositioner},
         },
         shell::commands::{layer_surface::get_layer_surface, popup},
     },
     widget::{column, row, text},
     window::{self, Id, Settings},
-    Element, Length, Padding, Size, Subscription, Task, Theme,
+    Element, Length, Padding, Subscription, Task, Theme,
 };
 use smithay_client_toolkit::shell::wlr_layer::Anchor;
-use wayland_protocols_wlr::layer_shell;
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},

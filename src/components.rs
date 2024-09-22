@@ -15,11 +15,11 @@ pub fn app_tray_button<'a, T: 'a>(
 ) -> iced::widget::Button<'a, T> {
     match icon_path {
         Some(path) => iced::widget::button(if is_start_menu {
-            column![crate::components::app_icon(&path)]
+            column![crate::components::app_icon(path)]
         } else {
             column![
                 app_tray_horizontal_rule(is_active, num_toplevels, true),
-                crate::components::app_icon(&path),
+                crate::components::app_icon(path),
                 app_tray_horizontal_rule(is_active, num_toplevels, false)
             ]
         }),
