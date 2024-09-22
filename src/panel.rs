@@ -17,8 +17,8 @@ use smithay_client_toolkit::shell::wlr_layer::Anchor;
 
 use crate::{
     app_tray::{AppTray, AppTrayMessage},
-    component_theme::PANEL_SIZE,
     config::PanelConfig,
+    design::component_theme::PANEL_SIZE,
     freedesktop::{desktop_entry::DesktopEntryCache, icons::IconTheme},
     settings_tray::{SettingsTray, SettingsTrayMessage},
     start_menu::{StartMenu, StartMenuMessage},

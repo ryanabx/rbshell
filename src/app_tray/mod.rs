@@ -8,9 +8,9 @@ use compositor::{
 use iced::{Element, Task};
 
 use crate::{
-    component_theme::{button_style, PANEL_SIZE},
-    components::app_tray_button,
     config::AppTrayConfig,
+    design::component_theme::{button_style, PANEL_SIZE},
+    design::components::app_tray_button,
     freedesktop::desktop_entry::EntryInfo,
 };
 

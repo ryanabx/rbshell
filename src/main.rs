@@ -15,13 +15,14 @@ use env_logger::Env;
 
 use panel::Panel;
 
-pub mod app_tray;
-pub mod component_theme;
-pub mod components;
+pub mod design;
 pub mod freedesktop;
 
 mod config;
+
 mod panel;
+
+pub mod app_tray;
 mod settings_tray;
 pub mod start_menu;
 

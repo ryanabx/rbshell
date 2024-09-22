@@ -1,5 +1,5 @@
 use crate::{
-    components::app_icon,
+    design::components::app_icon,
     freedesktop::icons::{default_icon_path, IconTheme},
 };
 
