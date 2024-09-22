@@ -6,7 +6,8 @@ use iced::{
         row,
         scrollable::{Direction, Scrollbar},
         text,
-    }, Element, Length, Task,
+    },
+    Element, Length, Task,
 };
 
 use crate::{

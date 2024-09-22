@@ -5,10 +5,7 @@ use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use compositor::{
     CompositorBackend, CompositorToplevelInfo, ToplevelHandle, WaylandIncoming, WaylandOutgoing,
 };
-use iced::{
-    window::Id,
-    Element, Task,
-};
+use iced::{window::Id, Element, Task};
 
 use crate::{
     component_theme::{button_style, PANEL_SIZE},

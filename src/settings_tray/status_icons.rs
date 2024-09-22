@@ -1,4 +1,3 @@
-
 use crate::components::{app_icon, default_icon_path};
 
 use super::SettingsTrayMessage;

@@ -2,8 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use cosmic_protocols::{
     toplevel_info::v1::client::{
-        zcosmic_toplevel_handle_v1::{ZcosmicToplevelHandleV1},
-        zcosmic_toplevel_info_v1,
+        zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, zcosmic_toplevel_info_v1,
     },
     workspace::v1::client::zcosmic_workspace_handle_v1,
 };
@@ -38,8 +37,7 @@ use wayland_client::{
 };
 use wayland_protocols_plasma::plasma_window_management::client::org_kde_plasma_window_management;
 use wayland_protocols_wlr::foreign_toplevel::v1::client::{
-    zwlr_foreign_toplevel_handle_v1::{ZwlrForeignToplevelHandleV1},
-    zwlr_foreign_toplevel_manager_v1,
+    zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1, zwlr_foreign_toplevel_manager_v1,
 };
 
 use crate::app_tray::AppTrayMessage;
