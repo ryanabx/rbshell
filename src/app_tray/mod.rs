@@ -201,5 +201,5 @@ fn get_horizontal_rule<'a>(
         }),
     )
     .width(Length::Fixed(if is_active { 12.0 } else { 6.0 }))
-    .center_x(Length::Fill)
+    // .center_x(Length::Fill)
 }

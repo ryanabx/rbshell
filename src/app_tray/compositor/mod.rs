@@ -47,6 +47,10 @@ use wayland_protocols_wlr::foreign_toplevel::v1::client::{
 
 use crate::app_tray::AppTrayMessage;
 
+pub mod cosmic;
+pub mod kde;
+pub mod wlr;
+
 struct AppData {
     exit: bool,
     tx: UnboundedSender<WaylandIncoming>,
@@ -159,30 +163,6 @@ pub enum ToplevelState {
     Activated,
 }
 
-impl From<zcosmic_toplevel_handle_v1::State> for ToplevelState {
-    fn from(value: zcosmic_toplevel_handle_v1::State) -> Self {
-        match value {
-            zcosmic_toplevel_handle_v1::State::Maximized => Self::Maximized,
-            zcosmic_toplevel_handle_v1::State::Minimized => Self::Minimized,
-            zcosmic_toplevel_handle_v1::State::Activated => Self::Activated,
-            zcosmic_toplevel_handle_v1::State::Fullscreen => Self::Fullscreen,
-            _ => todo!(),
-        }
-    }
-}
-
-impl From<zwlr_foreign_toplevel_handle_v1::State> for ToplevelState {
-    fn from(value: zwlr_foreign_toplevel_handle_v1::State) -> Self {
-        match value {
-            zwlr_foreign_toplevel_handle_v1::State::Maximized => Self::Maximized,
-            zwlr_foreign_toplevel_handle_v1::State::Minimized => Self::Minimized,
-            zwlr_foreign_toplevel_handle_v1::State::Activated => Self::Activated,
-            zwlr_foreign_toplevel_handle_v1::State::Fullscreen => Self::Fullscreen,
-            _ => todo!(),
-        }
-    }
-}
-
 impl OutputHandler for AppData {
     fn output_state(&mut self) -> &mut OutputState {
         &mut self.output_state
@@ -246,201 +226,10 @@ enum ToplevelHandleEvent {
     None,
 }
 
-impl From<zwlr_foreign_toplevel_handle_v1::Event> for ToplevelHandleEvent {
-    fn from(value: zwlr_foreign_toplevel_handle_v1::Event) -> Self {
-        match value {
-            zwlr_foreign_toplevel_handle_v1::Event::Title { title } => Self::Title { title },
-            zwlr_foreign_toplevel_handle_v1::Event::AppId { app_id } => Self::AppId { app_id },
-            zwlr_foreign_toplevel_handle_v1::Event::OutputEnter { output } => {
-                Self::OutputEnter { output }
-            }
-            zwlr_foreign_toplevel_handle_v1::Event::OutputLeave { output } => {
-                Self::OutputLeave { output }
-            }
-            zwlr_foreign_toplevel_handle_v1::Event::State { state } => {
-                let mut r_state = HashSet::new();
-                for value in state.chunks_exact(4) {
-                    if let Ok(state) = zwlr_foreign_toplevel_handle_v1::State::try_from(
-                        u32::from_ne_bytes(value[0..4].try_into().unwrap()),
-                    ) {
-                        r_state.insert(ToplevelState::from(state));
-                    }
-                }
-                Self::State { state: r_state }
-            }
-            zwlr_foreign_toplevel_handle_v1::Event::Done => Self::Done,
-            zwlr_foreign_toplevel_handle_v1::Event::Closed => Self::Closed,
-            zwlr_foreign_toplevel_handle_v1::Event::Parent { .. } => Self::None, // TODO: Not implemented
-            _ => todo!(),
-        }
-    }
-}
-
-impl From<zcosmic_toplevel_handle_v1::Event> for ToplevelHandleEvent {
-    fn from(value: zcosmic_toplevel_handle_v1::Event) -> Self {
-        match value {
-            zcosmic_toplevel_handle_v1::Event::Closed => ToplevelHandleEvent::Closed,
-            zcosmic_toplevel_handle_v1::Event::Done => ToplevelHandleEvent::Done,
-            zcosmic_toplevel_handle_v1::Event::Title { title } => {
-                ToplevelHandleEvent::Title { title }
-            }
-            zcosmic_toplevel_handle_v1::Event::AppId { app_id } => {
-                ToplevelHandleEvent::AppId { app_id }
-            }
-            zcosmic_toplevel_handle_v1::Event::OutputEnter { output } => {
-                ToplevelHandleEvent::OutputEnter { output }
-            }
-            zcosmic_toplevel_handle_v1::Event::OutputLeave { output } => {
-                ToplevelHandleEvent::OutputLeave { output }
-            }
-            zcosmic_toplevel_handle_v1::Event::WorkspaceEnter { .. } => todo!(),
-            zcosmic_toplevel_handle_v1::Event::WorkspaceLeave { .. } => todo!(),
-            zcosmic_toplevel_handle_v1::Event::State { state } => {
-                let mut r_state = HashSet::new();
-                for value in state.chunks_exact(4) {
-                    if let Ok(state) = zcosmic_toplevel_handle_v1::State::try_from(
-                        u32::from_ne_bytes(value[0..4].try_into().unwrap()),
-                    ) {
-                        r_state.insert(ToplevelState::from(state));
-                    }
-                }
-                Self::State { state: r_state }
-            }
-            _ => todo!(),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 enum ToplevelManagerEvent {
     Toplevel(ToplevelHandle),
     Finished,
-}
-
-impl From<zwlr_foreign_toplevel_manager_v1::Event> for ToplevelManagerEvent {
-    fn from(value: zwlr_foreign_toplevel_manager_v1::Event) -> Self {
-        match value {
-            zwlr_foreign_toplevel_manager_v1::Event::Toplevel { toplevel } => {
-                Self::Toplevel(ToplevelHandle::Zwlr(toplevel))
-            }
-            zwlr_foreign_toplevel_manager_v1::Event::Finished => Self::Finished,
-            _ => todo!(),
-        }
-    }
-}
-
-impl From<zcosmic_toplevel_info_v1::Event> for ToplevelManagerEvent {
-    fn from(value: zcosmic_toplevel_info_v1::Event) -> Self {
-        match value {
-            zcosmic_toplevel_info_v1::Event::Toplevel { toplevel } => {
-                Self::Toplevel(ToplevelHandle::Zcosmic(toplevel))
-            }
-            zcosmic_toplevel_info_v1::Event::Finished => Self::Finished,
-            _ => todo!(),
-        }
-    }
-}
-
-// WLR Foreign Toplevel Management
-
-impl Dispatch<zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1, ()> for AppData {
-    fn event(
-        state: &mut Self,
-        toplevel: &zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1,
-        event: <zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1 as Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        state.handle_toplevel_handle_event(
-            ToplevelHandle::Zwlr(toplevel.clone()),
-            ToplevelHandleEvent::from(event),
-        );
-    }
-}
-
-impl Dispatch<zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1, ()> for AppData {
-    fn event(
-        state: &mut Self,
-        _proxy: &wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1,
-        event: wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_manager_v1::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        // println!("Toplevel event {:?}", event);
-        state.handle_toplevel_manager_event(ToplevelManagerEvent::from(event));
-    }
-
-    event_created_child!(
-        AppData, zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1,
-        [
-            zwlr_foreign_toplevel_manager_v1::EVT_TOPLEVEL_OPCODE => (zwlr_foreign_toplevel_handle_v1::ZwlrForeignToplevelHandleV1, ())
-        ]
-    );
-}
-
-// COSMIC Foreign Toplevel Info
-
-impl Dispatch<zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, ()> for AppData {
-    fn event(
-        state: &mut Self,
-        toplevel: &zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1,
-        event: <zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1 as Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        state.handle_toplevel_handle_event(
-            ToplevelHandle::Zcosmic(toplevel.clone()),
-            ToplevelHandleEvent::from(event),
-        );
-    }
-}
-
-impl Dispatch<zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, ()> for AppData {
-    fn event(
-        state: &mut Self,
-        _proxy: &zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1,
-        event: <zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1 as Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        state.handle_toplevel_manager_event(ToplevelManagerEvent::from(event));
-    }
-
-    wayland_client::event_created_child!(AppData, zcosmic_toplevel_info_v1::ZcosmicToplevelInfoV1, [
-        zcosmic_toplevel_info_v1::EVT_TOPLEVEL_OPCODE => (zcosmic_toplevel_handle_v1::ZcosmicToplevelHandleV1, ())
-    ]);
-}
-
-// KDE Window Management
-
-impl Dispatch<org_kde_plasma_window::OrgKdePlasmaWindow, ()> for AppData {
-    fn event(
-        _state: &mut Self,
-        _proxy: &org_kde_plasma_window::OrgKdePlasmaWindow,
-        event: <org_kde_plasma_window::OrgKdePlasmaWindow as Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        println!("{:?}", event);
-    }
-}
-
-impl Dispatch<org_kde_plasma_window_management::OrgKdePlasmaWindowManagement, ()> for AppData {
-    fn event(
-        _state: &mut Self,
-        _proxy: &org_kde_plasma_window_management::OrgKdePlasmaWindowManagement,
-        event: <org_kde_plasma_window_management::OrgKdePlasmaWindowManagement as Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        _qhandle: &QueueHandle<Self>,
-    ) {
-        println!("{:?}", event);
-    }
 }
 
 // WL REGISTRY
