@@ -1,6 +1,6 @@
 use crate::{
     design::components::app_icon,
-    freedesktop::icons::{default_icon_path, IconTheme},
+    freedesktop::icons::{default_icon_path, IconTheme, ImageHandle},
 };
 
 use super::SettingsTrayMessage;
@@ -19,6 +19,6 @@ impl StatusIcons {
             .with_cache()
             .find()
             .or_else(|| default_icon_path(icon_theme));
-        iced::widget::row![app_icon(&icon_path.unwrap())].into()
+        iced::widget::row![app_icon(ImageHandle::from_path(&icon_path.unwrap()))].into()
     }
 }

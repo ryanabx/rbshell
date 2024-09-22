@@ -1,6 +1,7 @@
 use std::{
     env,
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 use clap::Parser;
@@ -45,26 +46,30 @@ enum PanelError {
     Config(#[from] ConfigError),
     #[error("Iced: {0}")]
     Iced(#[from] iced::Error),
+    #[error("Mutex poison on config")]
+    MutexPoison,
 }
 
-fn main() -> Result<(), PanelError> {
+fn main() -> anyhow::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
     let args = CliArgs::parse();
     log::trace!("Received args: {:?}", args);
-    let config = PanelConfig::from_file_or_default(
-        &args
-            .config
-            .unwrap_or(Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json")),
-    );
-
+    let config_path = args
+        .config
+        .unwrap_or(Path::new(&env::var("HOME").unwrap()).join(".config/rbshell/config.json"));
+    let config = Arc::new(Mutex::new(PanelConfig::from_file_or_default(&config_path)));
+    let config_handle = config.clone();
     let res = iced::daemon(Panel::title, Panel::update, Panel::view)
         // iced::application(Panel::title, Panel::update, Panel::view)
         .subscription(Panel::subscription)
         //     // .window_size((1280.0, 48.0))
         .theme(Panel::theme)
         // .decorations(false)
-        .run_with(|| Panel::new(config))
+        .run_with(|| Panel::new(config_handle))
         .map_err(PanelError::Iced);
-
-    res
+    let _ = config
+        .lock()
+        .map_err(|_| PanelError::MutexPoison)?
+        .save_to_file();
+    Ok(res?)
 }

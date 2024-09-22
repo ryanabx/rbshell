@@ -7,15 +7,17 @@ use iced::{
         scrollable::{Direction, Scrollbar},
         text,
     },
-    Element, Length, Task,
+    Length, Task,
 };
 
 use crate::{
-    design::component_theme::{button_style, PANEL_SIZE},
-    design::components::{app_icon, app_tray_button},
+    design::{
+        component_theme::{button_style, PANEL_SIZE},
+        components::{app_icon, app_tray_button},
+    },
     freedesktop::{
         desktop_entry::{DesktopEntryCache, EntryInfo},
-        icons::{start_menu_icon, IconTheme},
+        icons::{start_menu_icon, IconTheme, ImageHandle},
     },
 };
 
@@ -39,9 +41,11 @@ impl<'a> StartMenu<'a> {
         icon_theme: &IconTheme,
         start_menu_opened: bool,
     ) -> iced::Element<StartMenuMessage> {
-        let start_menu_icon_path = start_menu_icon(icon_theme);
+        let start_menu_icon_path = start_menu_icon(icon_theme)
+            .as_deref()
+            .map(ImageHandle::from_path);
         iced::widget::container(
-            app_tray_button(start_menu_icon_path.as_deref(), start_menu_opened, 0, true)
+            app_tray_button(start_menu_icon_path, start_menu_opened, 0, true)
                 .on_press(StartMenuMessage::MenuToggle)
                 .style(move |theme, status| button_style(theme, status, start_menu_opened, 0)),
         )
@@ -95,13 +99,13 @@ fn view_menu_item<'a>(entry: &EntryInfo<'a>) -> Option<iced::Element<'a, StartMe
     } else {
         Some(
             iced::widget::button(row![
-                iced::widget::container(match &entry.icon_path {
+                iced::widget::container(match &entry.entry_image {
                     Some(path) => {
-                        app_icon(path)
+                        app_icon(path.clone())
                     }
                     None => {
                         // log::warn!("No icon for {}", desktop_entry.appid);
-                        Element::from(iced::widget::horizontal_space())
+                        iced::widget::container(iced::widget::horizontal_space())
                     }
                 })
                 .width(32)

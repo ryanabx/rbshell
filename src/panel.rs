@@ -1,4 +1,7 @@
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use iced::{
     border::Radius,
@@ -31,6 +34,7 @@ pub struct Panel<'a> {
     main_window: window::Id,
     popup_window: Option<(window::Id, PopupType)>,
     icon_theme: IconTheme,
+    config: Arc<Mutex<PanelConfig>>,
 }
 
 #[derive(Clone, Debug)]
@@ -40,8 +44,8 @@ pub enum PopupType {
 }
 
 impl<'a> Panel<'a> {
-    pub fn new(config: PanelConfig) -> (Self, Task<Message>) {
-        let (id, open) = if config.use_winit {
+    pub fn new(config: Arc<Mutex<PanelConfig>>) -> (Self, Task<Message>) {
+        let (id, open) = if config.lock().unwrap().inner.use_winit.unwrap_or(false) {
             let (id, open) = window::open(window::Settings {
                 size: (1280.0, 48.0).into(),
                 ..Default::default()
@@ -72,15 +76,24 @@ impl<'a> Panel<'a> {
             (id, open)
         };
         log::info!("Window requested open {:?}", id);
-        let desktop_entry_cache = Rc::new(DesktopEntryCache::new(&config.icon_theme));
+        let icon_theme = config
+            .lock()
+            .unwrap()
+            .inner
+            .icon_theme
+            .clone()
+            .unwrap_or_default();
+        let app_tray_config_clone = config.clone();
+        let desktop_entry_cache = Rc::new(DesktopEntryCache::new(&icon_theme));
         (
             Self {
                 start_menu: StartMenu::new(desktop_entry_cache.clone()),
-                app_tray: AppTray::new(config.app_tray, desktop_entry_cache.clone()),
+                app_tray: AppTray::new(app_tray_config_clone, desktop_entry_cache.clone()),
                 settings_tray: SettingsTray::new(),
                 main_window: id,
                 popup_window: None,
-                icon_theme: config.icon_theme,
+                icon_theme,
+                config,
             },
             open,
         )

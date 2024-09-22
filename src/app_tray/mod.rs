@@ -1,4 +1,8 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::HashMap,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use super::freedesktop::desktop_entry::DesktopEntryCache;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
@@ -8,9 +12,11 @@ use compositor::{
 use iced::{Element, Task};
 
 use crate::{
-    config::AppTrayConfig,
-    design::component_theme::{button_style, PANEL_SIZE},
-    design::components::app_tray_button,
+    config::PanelConfig,
+    design::{
+        component_theme::{button_style, PANEL_SIZE},
+        components::app_tray_button,
+    },
     freedesktop::desktop_entry::EntryInfo,
 };
 
@@ -20,7 +26,7 @@ pub mod compositor;
 pub struct AppTray<'a> {
     de_cache: Rc<DesktopEntryCache<'a>>,
     backend: CompositorBackend,
-    config: AppTrayConfig,
+    config: Arc<Mutex<PanelConfig>>,
 }
 
 #[derive(Clone, Debug)]
@@ -33,7 +39,7 @@ pub enum AppTrayMessage {
 }
 
 impl<'a> AppTray<'a> {
-    pub fn new(config: AppTrayConfig, de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
+    pub fn new(config: Arc<Mutex<PanelConfig>>, de_cache: Rc<DesktopEntryCache<'a>>) -> Self {
         Self {
             de_cache,
             backend: CompositorBackend::new(),
@@ -44,8 +50,10 @@ impl<'a> AppTray<'a> {
     pub fn view(&self) -> iced::Element<AppTrayMessage> {
         let active_window = self.backend.active_window();
         // Get app tray apps
-        let app_tray_apps = self
-            .config
+        let panel_config = self.config.lock().unwrap().clone();
+        let app_tray_apps = panel_config
+            .inner
+            .app_tray
             .favorites
             .iter()
             .map(|x| {
@@ -64,7 +72,7 @@ impl<'a> AppTray<'a> {
                     .active_toplevels
                     .iter()
                     .filter_map(|(app_id, info)| {
-                        if self.config.favorites.contains(app_id) {
+                        if panel_config.inner.app_tray.favorites.contains(app_id) {
                             None
                         } else {
                             Some((app_id.clone(), info.clone()))
@@ -112,7 +120,6 @@ impl<'a> AppTray<'a> {
         self.backend
             .wayland_subscription()
             .map(AppTrayMessage::WaylandIn)
-        // iced::Subscription::none()
     }
 
     fn view_tray_item(
@@ -127,10 +134,10 @@ impl<'a> AppTray<'a> {
         }
         let is_active = active_window.is_some_and(|window| app_info.contains_key(&window));
         let num_toplevels = app_info.len();
-        let icon_path = entry.and_then(|e| e.icon_path.as_deref());
+        let image_handle = entry.and_then(|e| e.entry_image.clone());
         Some(
             iced::widget::mouse_area(
-                app_tray_button(icon_path, is_active, num_toplevels, false)
+                app_tray_button(image_handle, is_active, num_toplevels, false)
                     .on_press_maybe(if num_toplevels == 0 {
                         entry
                             .and_then(|entry| entry.desktop_entry.exec())

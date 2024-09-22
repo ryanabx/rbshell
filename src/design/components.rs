@@ -1,14 +1,14 @@
-use std::path::Path;
-
 use iced::{
     widget::{column, Container},
-    Element, Length, Theme,
+    Length, Theme,
 };
+
+use crate::freedesktop::icons::ImageHandle;
 
 use super::component_theme::app_tray_icon_rule;
 
 pub fn app_tray_button<'a, T: 'a>(
-    icon_path: Option<&Path>,
+    icon_path: Option<ImageHandle>,
     is_active: bool,
     num_toplevels: usize,
     is_start_menu: bool,
@@ -47,20 +47,19 @@ fn app_tray_horizontal_rule<'a, T: 'a>(
     .center_x(Length::Fill)
 }
 
-pub fn app_icon<'a, T>(icon_path: &Path) -> iced::Element<'a, T> {
-    if icon_path.extension().is_some_and(|x| x == "svg") {
-        Element::from(
-            iced::widget::svg(icon_path)
+pub fn app_icon<'a, T>(image_handle: ImageHandle) -> iced::widget::Container<'a, T> {
+    match image_handle {
+        ImageHandle::Svg(handle) => iced::widget::container(
+            iced::widget::svg(handle)
                 .content_fit(iced::ContentFit::Contain)
                 .width(Length::Fill)
                 .height(Length::Fill),
-        )
-    } else {
-        Element::from(
-            iced::widget::image(icon_path)
+        ),
+        ImageHandle::Image(handle) => iced::widget::container(
+            iced::widget::image(handle)
                 .content_fit(iced::ContentFit::Contain)
                 .width(Length::Fill)
                 .height(Length::Fill),
-        )
+        ),
     }
 }

@@ -1,10 +1,10 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 use freedesktop_desktop_entry::{
     default_paths, get_languages_from_env, DesktopEntry, Iter, Locale, PathSource,
 };
 
-use super::icons::{default_icon_path, IconTheme};
+use super::icons::{default_icon_path, IconTheme, ImageHandle};
 
 #[derive(Clone, Debug)]
 pub struct DesktopEntryCache<'a>(pub HashMap<String, EntryInfo<'a>>);
@@ -12,7 +12,7 @@ pub struct DesktopEntryCache<'a>(pub HashMap<String, EntryInfo<'a>>);
 #[derive(Clone, Debug)]
 pub struct EntryInfo<'a> {
     pub desktop_entry: DesktopEntry<'a>,
-    pub icon_path: Option<PathBuf>,
+    pub entry_image: Option<ImageHandle>,
     pub invisible: bool,
 }
 
@@ -26,18 +26,22 @@ impl<'a> EntryInfo<'a> {
         let icon_path = if invisible {
             None
         } else {
-            desktop_entry.icon().and_then(|icon| {
-                freedesktop_icons::lookup(icon)
-                    .with_theme("hicolor")
-                    .force_svg()
-                    .find()
-                    .or_else(|| freedesktop_icons::lookup(icon).with_theme("hicolor").find())
-                    .or_else(|| default_icon_path(&icon_theme))
-            })
+            desktop_entry
+                .icon()
+                .and_then(|icon| {
+                    freedesktop_icons::lookup(icon)
+                        .with_theme("hicolor")
+                        .force_svg()
+                        .find()
+                        .or_else(|| freedesktop_icons::lookup(icon).with_theme("hicolor").find())
+                        .or_else(|| default_icon_path(icon_theme))
+                })
+                .as_deref()
+                .map(ImageHandle::from_path)
         };
         Self {
             desktop_entry,
-            icon_path,
+            entry_image: icon_path,
             invisible,
         }
     }
@@ -52,7 +56,7 @@ impl<'a> DesktopEntryCache<'a> {
                 let path_src = PathSource::guess_from(&path);
                 if let Ok(entry) = DesktopEntry::from_path(path.clone(), &locales) {
                     log::trace!("{:?}::{}", path_src, &entry.appid);
-                    return Some((entry.appid.to_string(), EntryInfo::new(entry, &icon_theme)));
+                    return Some((entry.appid.to_string(), EntryInfo::new(entry, icon_theme)));
                 }
                 None
             })

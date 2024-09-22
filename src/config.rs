@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{self, Read},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
@@ -16,26 +16,22 @@ pub enum ConfigError {
     Serde(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct PanelConfig {
-    pub app_tray: AppTrayConfig,
-    pub icon_theme: IconTheme,
-    pub use_winit: bool,
+    pub inner: InnerConfig,
+    file_path: PathBuf,
 }
 
-impl Default for PanelConfig {
-    fn default() -> Self {
-        Self {
-            app_tray: Default::default(),
-            icon_theme: Default::default(),
-            use_winit: Default::default(),
-        }
-    }
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct InnerConfig {
+    pub app_tray: AppTrayConfig,
+    pub icon_theme: Option<IconTheme>,
+    pub use_winit: Option<bool>,
 }
 
 impl PanelConfig {
     pub fn from_file_or_default(path: &Path) -> Self {
-        File::open(path)
+        let inner_res = File::open(path)
             .map_err(ConfigError::IO)
             .and_then(|mut res| {
                 let mut data = String::new();
@@ -43,15 +39,26 @@ impl PanelConfig {
                     .map(|_| data)
                     .map_err(ConfigError::IO)
             })
-            .and_then(|val| -> Result<Self, ConfigError> {
+            .and_then(|val| -> Result<InnerConfig, ConfigError> {
                 serde_json::from_str(&val).map_err(ConfigError::Serde)
-            })
-            .unwrap_or_default()
+            });
+        match inner_res {
+            Ok(_) => {
+                log::info!("Successfully loaded config from {}", path.display());
+            }
+            Err(ref e) => {
+                log::warn!("Could not load config from {}: {}", path.display(), e);
+            }
+        }
+        Self {
+            inner: inner_res.unwrap_or_default(),
+            file_path: path.to_path_buf(),
+        }
     }
 
-    pub fn _save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
-        let data = serde_json::to_string_pretty(self)?;
-        std::fs::write(path, data)?;
+    pub fn save_to_file(&self) -> Result<(), ConfigError> {
+        let data = serde_json::to_string_pretty(&self.inner)?;
+        std::fs::write(&self.file_path, data)?;
         Ok(())
     }
 }

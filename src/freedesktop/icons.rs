@@ -1,4 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +10,22 @@ pub enum IconTheme {
     Breeze,
     Cosmic,
     None,
+}
+
+#[derive(Clone, Debug)]
+pub enum ImageHandle {
+    Svg(iced::widget::svg::Handle),
+    Image(iced::widget::image::Handle),
+}
+
+impl ImageHandle {
+    pub fn from_path(path: &Path) -> Self {
+        if path.extension().is_some_and(|extension| extension == "svg") {
+            Self::Svg(iced::widget::svg::Handle::from_path(path))
+        } else {
+            Self::Image(iced::widget::image::Handle::from_path(path))
+        }
+    }
 }
 
 impl Default for IconTheme {
