@@ -42,30 +42,49 @@ impl Default for IconTheme {
     }
 }
 
+impl IconTheme {
+    fn to_string(&self) -> String {
+        match self {
+            IconTheme::Breeze => "breeze".to_string(),
+            IconTheme::Cosmic => "Cosmic".to_string(),
+            IconTheme::None => "hicolor".to_string(),
+        }
+    }
+
+    fn lookup(&self, icon: &str) -> Option<PathBuf> {
+        freedesktop_icons::lookup(icon)
+            .with_theme(&self.to_string())
+            .with_cache()
+            .find()
+    }
+}
+
 pub fn default_icon_path(theme: &IconTheme) -> Option<PathBuf> {
     match theme {
-        IconTheme::Breeze => freedesktop_icons::lookup("wayland")
-            .with_theme("breeze")
-            .with_cache()
-            .find(),
-        IconTheme::Cosmic => freedesktop_icons::lookup("application-default")
-            .with_theme("Cosmic")
-            .with_cache()
-            .find(),
+        IconTheme::Breeze => theme.lookup("wayland"),
+        IconTheme::Cosmic => theme.lookup("application-default"),
         IconTheme::None => None,
     }
 }
 
 pub fn start_menu_icon(theme: &IconTheme) -> Option<PathBuf> {
     match theme {
-        IconTheme::Breeze => freedesktop_icons::lookup("applications-all")
-            .with_theme("breeze")
-            .with_cache()
-            .find(),
-        IconTheme::Cosmic => freedesktop_icons::lookup("applications-office")
-            .with_theme("Cosmic")
-            .with_cache()
-            .find(),
+        IconTheme::Breeze => theme.lookup("applications-all"),
+        IconTheme::Cosmic => theme.lookup("applications-office"),
         IconTheme::None => None,
+    }
+}
+
+pub fn network_icon(theme: &IconTheme, strength: f32) -> Option<PathBuf> {
+    match theme {
+        IconTheme::Breeze => {
+            if strength > 0.9 {
+                theme.lookup("network-wireless-100")
+            } else {
+                theme.lookup("network-wireless-40")
+            }
+        }
+        IconTheme::Cosmic => todo!(),
+        IconTheme::None => todo!(),
     }
 }
