@@ -21,12 +21,12 @@ checksum = "c71b1793ee61086797f5c80b6efa2b8ffa6d5dd703f118545808a7f2e27f7046"
 [[package]]
 name = "accesskit"
 version = "0.16.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 
 [[package]]
 name = "accesskit_atspi_common"
 version = "0.9.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "accesskit_consumer",
@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "accesskit_consumer"
 version = "0.24.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "immutable-chunkmap",
@@ -48,7 +48,7 @@ dependencies = [
 [[package]]
 name = "accesskit_macos"
 version = "0.17.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "accesskit_consumer",
@@ -61,7 +61,7 @@ dependencies = [
 [[package]]
 name = "accesskit_unix"
 version = "0.12.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "accesskit_atspi_common",
@@ -78,7 +78,7 @@ dependencies = [
 [[package]]
 name = "accesskit_windows"
 version = "0.22.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "accesskit_consumer",
@@ -90,7 +90,7 @@ dependencies = [
 [[package]]
 name = "accesskit_winit"
 version = "0.22.0"
-source = "git+https://github.com/wash2/accesskit?tag=pop-0.13#302266f6db6b3ab305d5947a7b22324fdc1ab128"
+source = "git+https://github.com/wash2/accesskit?tag=iced-xdg-surface-0.13#6050b02771ba9d6e4113902d9dfb7cf41a20573c"
 dependencies = [
  "accesskit",
  "accesskit_macos",
@@ -539,9 +539,9 @@ checksum = "8b75356056920673b02621b35afd0f7dda9306d03c79a30f5c56c44cf256e3de"
 
 [[package]]
 name = "async-trait"
-version = "0.1.82"
+version = "0.1.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a27b8a3a6e1a44fa4c8baf1f653e4172e81486d4941f2237e20dc2d0cf4ddff1"
+checksum = "721cae7de5c34fbb2acd27e21e6d2cf7b886dce0c27388d46c4e6c47ea4318dd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1329,7 +1329,7 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 [[package]]
 name = "dpi"
 version = "0.1.1"
-source = "git+https://github.com/rust-windowing/winit.git?rev=241b7a80bba96c91fa3901729cd5dec66abb9be4#241b7a80bba96c91fa3901729cd5dec66abb9be4"
+source = "git+https://github.com/pop-os/winit.git?tag=iced-xdg-surface-0.13#7b708e5b3357ec40b53b8caab1b0c38d634af1bb"
 
 [[package]]
 name = "drm"
@@ -1544,9 +1544,9 @@ checksum = "e8c02a5121d4ea3eb16a80748c74f5549a5665e4c21333c6098f283870fbdea6"
 
 [[package]]
 name = "fdeflate"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f9bfee30e4dedf0ab8b422f03af778d9612b63f502710fc500a334ebe2de645"
+checksum = "d8090f921a24b04994d9929e204f50b498a33ea6ba559ffaa05e04f7ee7fb5ab"
 dependencies = [
  "simd-adler32",
 ]
@@ -2087,7 +2087,7 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "dnd",
  "iced_accessibility",
@@ -2105,7 +2105,7 @@ dependencies = [
 [[package]]
 name = "iced_accessibility"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -2114,7 +2114,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "bitflags 2.6.0",
  "bytes",
@@ -2138,7 +2138,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "async-std",
  "futures",
@@ -2152,7 +2152,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "bitflags 2.6.0",
  "bytemuck",
@@ -2173,7 +2173,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -2185,7 +2185,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "bytes",
  "dnd",
@@ -2200,7 +2200,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -2216,7 +2216,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "as-raw-xcb-connection",
  "bitflags 2.6.0",
@@ -2246,7 +2246,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "dnd",
  "iced_renderer",
@@ -2263,7 +2263,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.13.0"
-source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#8f3b61e635e325cf013e3f112ed41b4cbc654fb0"
+source = "git+https://github.com/pop-os/iced?branch=ashley-rebase-0.13#de478e977376c80ed8ffd697ee913ef2605a3dc8"
 dependencies = [
  "dnd",
  "iced_futures",
@@ -2486,9 +2486,9 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
-version = "0.2.158"
+version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
+checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
 
 [[package]]
 name = "libloading"
@@ -3188,7 +3188,7 @@ checksum = "1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8"
 dependencies = [
  "cfg-if",
  "libc",
- "redox_syscall 0.5.4",
+ "redox_syscall 0.5.6",
  "smallvec",
  "windows-targets 0.52.6",
 ]
@@ -3377,7 +3377,7 @@ version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecf48c7ca261d60b74ab1a7b20da18bede46776b2e55535cb958eb595c5fa7b"
 dependencies = [
- "toml_edit 0.22.21",
+ "toml_edit 0.22.22",
 ]
 
 [[package]]
@@ -3545,9 +3545,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.5.4"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0884ad60e090bf1345b93da0a5de8923c93884cd03f40dfcfddd3b4bee661853"
+checksum = "355ae415ccd3a04315d3f8246e86d67689ea74d88d915576e1589a351062a13b"
 dependencies = [
  "bitflags 2.6.0",
 ]
@@ -4213,13 +4213,13 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.22.21"
+version = "0.22.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b072cee73c449a636ffd6f32bd8de3a9f7119139aff882f44943ce2986dc5cf"
+checksum = "4ae48d6208a266e853d946088ed816055e556cc6028c5e8e2b84d9fa5dd7c7f5"
 dependencies = [
  "indexmap",
  "toml_datetime",
- "winnow 0.6.18",
+ "winnow 0.6.20",
 ]
 
 [[package]]
@@ -5114,7 +5114,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 [[package]]
 name = "winit"
 version = "0.30.5"
-source = "git+https://github.com/rust-windowing/winit.git?rev=241b7a80bba96c91fa3901729cd5dec66abb9be4#241b7a80bba96c91fa3901729cd5dec66abb9be4"
+source = "git+https://github.com/pop-os/winit.git?tag=iced-xdg-surface-0.13#7b708e5b3357ec40b53b8caab1b0c38d634af1bb"
 dependencies = [
  "ahash 0.8.11",
  "android-activity",
@@ -5173,9 +5173,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.6.18"
+version = "0.6.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68a9bda4691f099d435ad181000724da8e5899daa10713c2d432552b9ccd3a6f"
+checksum = "36c1fec1a2bb5866f07c25f68c26e565c4c200aebb96d7e55710c19d3e8ac49b"
 dependencies = [
  "memchr",
 ]

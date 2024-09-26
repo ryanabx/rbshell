@@ -5,5 +5,6 @@
             "org.mozilla.Thunderbird",
             "im.riot.Riot"
         ]
-    }
+    },
+    "use_winit": true
 }
